@@ -28,7 +28,7 @@ These classes can also be used with the built-in [ValidationPipe](https://docs.n
 ## <a name="usage"></a>Usage?
 
 ```sh
-npm install --save-dev @vegardit/prisma-generator-nestjs-dto
+npm install --save-dev @weverson_na/prisma-generator-nestjs-dto
 ```
 
 ```prisma
