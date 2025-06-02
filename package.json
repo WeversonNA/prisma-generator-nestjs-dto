@@ -51,7 +51,8 @@
     "case": "^1.6.3",
     "make-dir": "^3.1.0",
     "slash": "^3.0.0",
-    "tar": "^6.1.11"
+    "tar": "^6.1.11",
+    "ts-morph": "^26.0.0"
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",
@@ -62,7 +63,7 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.2.4",
-    "prettier": "^2.4.1",
+    "prettier": "^2.8.8",
     "prisma": "^3.2.1",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",

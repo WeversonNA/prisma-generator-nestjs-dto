@@ -3,11 +3,10 @@ import path from 'node:path';
 import makeDir from 'make-dir';
 import { generatorHandler } from '@prisma/generator-helper';
 import { parseEnvValue } from '@prisma/sdk';
-
 import { run } from './generator';
-
 import type { GeneratorOptions } from '@prisma/generator-helper';
 import type { WriteableFileSpecs, NamingStyle } from './generator/types';
+import { MergeContent } from './merge-content';
 
 export const stringToBoolean = (input: string, defaultValue = false) => {
   if (input === 'true') {
@@ -94,12 +93,22 @@ export const generate = (options: GeneratorOptions) => {
     });
   }
 
+  const mergeContent = new MergeContent();
+
   return Promise.all(
     results
       .concat(Object.values(indexCollections))
       .map(async ({ fileName, content }) => {
         await makeDir(path.dirname(fileName));
-        return fs.writeFile(fileName, content);
+
+        const fileExists = await fs
+          .access(fileName)
+          .then(() => true)
+          .catch(() => false);
+        const writeContent = fileExists
+          ? mergeContent.merge(await fs.readFile(fileName, 'utf8'), content)
+          : content;
+        return fs.writeFile(fileName, writeContent);
       }),
   );
 };
