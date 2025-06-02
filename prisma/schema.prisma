@@ -20,8 +20,11 @@ generator nestjsDto {
 model Product {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String   @db.VarChar(255)
+  /// @ApiProperty({description: "A detailed description of the product."})
   description String   @db.VarChar(1024)
+  /// @ApiProperty({description: "A list of image URLs or data."})
   images      Json[]   @db.Json
+  /// @ApiProperty({description: "A list of tags or keywords associated with the product."})
   highlighted Boolean? @default(false)
   reviewCount Int?     @default(0)
   attributes  Json?
