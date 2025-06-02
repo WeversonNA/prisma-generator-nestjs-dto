@@ -142,15 +142,29 @@ export const makeHelpers = ({
         : entityName(field.type)
     }${when(field.isList, '[]')}`;
 
+  const isApiPropertyDocument = (field: ParsedField): boolean => {
+    return !!field?.documentation?.includes('@ApiProperty');
+  };
+
+  const addApiProperty = (field: ParsedField): string => {
+    const isApi = isApiPropertyDocument(field);
+    if (field.kind === 'enum') {
+      return isApi
+        ? `${field.documentation}\n`
+        : `@ApiProperty({ enum: ${fieldType(field)} })\n`;
+    }
+    if (['scalar', 'relation-input', 'object'].includes(field.kind)) {
+      return isApi ? `${field.documentation}\n` : '';
+    }
+    return '';
+  };
+
   const fieldToDtoProp = (
     field: ParsedField,
     useInputTypes = false,
     forceOptional = false,
   ) =>
-    `${when(
-      field.kind === 'enum',
-      `@ApiProperty({ enum: ${fieldType(field, useInputTypes)}})\n`,
-    )}${field.name}${unless(
+    `${addApiProperty(field)}${field.name}${unless(
       field.isRequired && !forceOptional,
       '?',
     )}: ${fieldType(field, useInputTypes)};`;
@@ -167,10 +181,10 @@ export const makeHelpers = ({
     )}`;
 
   const fieldToEntityProp = (field: ParsedField) =>
-    `${field.name}${unless(field.isRequired, '?')}: ${fieldType(field)} ${when(
-      field.isNullable,
-      ' | null',
-    )};`;
+    `${addApiProperty(field)}${field.name}${unless(
+      field.isRequired,
+      '?',
+    )}: ${fieldType(field)} ${when(field.isNullable, ' | null')};`;
 
   const fieldsToEntityProps = (fields: ParsedField[]) =>
     `${each(fields, (field) => fieldToEntityProp(field), '\n')}`;

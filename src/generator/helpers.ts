@@ -151,7 +151,9 @@ export const generateRelationInput = ({
   canCreateAnnotation,
   canConnectAnnotation,
 }: GenerateRelationInputParam) => {
-  const relationInputClassProps: Array<Pick<ParsedField, 'name' | 'type'>> = [];
+  const relationInputClassProps: Array<
+    Pick<ParsedField, 'name' | 'type' | 'documentation'>
+  > = [];
 
   const imports: ImportStatementParams[] = [];
   const apiExtraModels: string[] = [];
@@ -180,6 +182,7 @@ export const generateRelationInput = ({
     relationInputClassProps.push({
       name: 'create',
       type: preAndPostfixedName,
+      documentation: field.documentation,
     });
   }
 
@@ -205,6 +208,7 @@ export const generateRelationInput = ({
     relationInputClassProps.push({
       name: 'connect',
       type: preAndPostfixedName,
+      documentation: field.documentation,
     });
   }
 
