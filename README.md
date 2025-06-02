@@ -84,7 +84,7 @@ model Post {
 - @DtoRelationCanConnectOnCreate - adds [connect](https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#connect-an-existing-record) option on a relation field in the generated `CreateDTO` - useful when you want/need to connect to an existing related instance
 - @DtoRelationCanCreateOnUpdate - adds [create](https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#create-a-related-record) option on a relation field in the generated `UpdateDTO` - useful when you want to allow to create related model instances
 - @DtoRelationCanConnectOnUpdate - adds [connect](https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#connect-an-existing-record) option on a relation field in the generated `UpdateDTO` - useful when you want/need to connect to an existing related instance
-@ApiProperty is implemented to receive the complete Swagger ApiProperty decorator configuration. Whatever options you pass into @ApiProperty will be forwarded directly to the generated DTO class, ensuring that the DTO fields fully reflect the intended Swagger specifications. This approach allows you to leverage the full power and flexibility of the @ApiProperty decorator without any intermediary modifications.
+- @ApiProperty is implemented to receive the complete Swagger ApiProperty decorator configuration. Whatever options you pass into @ApiProperty will be forwarded directly to the generated DTO class, ensuring that the DTO fields fully reflect the intended Swagger specifications. This approach allows you to leverage the full power and flexibility of the @ApiProperty decorator without any intermediary modifications.
 
 ## <a name="example"></a>Example
 
