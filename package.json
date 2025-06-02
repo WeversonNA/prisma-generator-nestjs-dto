@@ -1,5 +1,5 @@
 {
-  "name": "@wna/prisma-generator-nestjs-dto",
+  "name": "@weverson_na/prisma-generator-nestjs-dto",
   "description": "Custom fork: Generates DTO and Entity classes from Prisma Schema for NestJS",
   "version": "1.5.1",
   "license": "Apache-2.0",
