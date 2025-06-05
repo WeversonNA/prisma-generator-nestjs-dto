@@ -275,7 +275,7 @@ export class TemplateHelpers {
     const opt = TemplateHelpers.unless(field.isRequired, '?');
     const nullable = TemplateHelpers.when(field.isNullable, ' | null');
     return (
-      this.addDecorator(field) +
+      this.addDecorator(field, true) +
       `${field.name}${opt}: ${this.fieldType(field)}${nullable};`
     );
   }

@@ -31,26 +31,34 @@ model Product {
   images      Json[]   @db.Json
   /// @ApiProperty({description: "A list of tags or keywords associated with the product."})
   highlighted Boolean? @default(false)
+  /// @ApiProperty({description: "The number of reviews for the product."})
   reviewCount Int?     @default(0)
   // attributes  Json?
   /// @Transform(({ value }) => value ? parseFloat(value) : null)
+  /// @ApiProperty({description: "The average rating of the product."})
   score       Float?
+  /// @ApiProperty({description: "The price of the product."})
   categoryId  String   @db.Uuid
+  /// @ApiProperty({description: "The ID of the company that owns the product."})
   companyId   String   @db.Uuid
 
+  /// @ApiProperty({description: "The category to which the product belongs."})
   /// @DtoRelationRequired
   /// @DtoRelationCanConnectOnCreate
   category Category @relation(fields: [categoryId], references: [id])
 
+  /// @ApiProperty({description: "The company that owns the product."})
   /// @DtoRelationRequired
   /// @DtoRelationCanConnectOnCreate
   company Company @relation(fields: [companyId], references: [id])
 
+  /// @ApiProperty({description: "The date and time when the product was created."})
   /// @DtoEntityHidden
   /// @DtoCreateOptional
   /// @DtoUpdateOptional
   createdAt DateTime @default(now()) @db.Timestamptz(6)
 
+  /// @ApiProperty({description: "The date and time when the product was last updated."})
   /// @DtoEntityHidden
   /// @DtoCreateOptional
   /// @DtoUpdateOptional
