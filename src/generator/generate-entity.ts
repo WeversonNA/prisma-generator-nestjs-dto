@@ -1,7 +1,7 @@
-import type { TemplateHelpers } from './template-helpers';
+import { TemplateHelpers } from './template-helpers';
 import type { EntityParams } from './types';
 
-interface GenerateEntityParam extends EntityParams {
+export interface GenerateEntityParam extends EntityParams {
   templateHelpers: TemplateHelpers;
 }
 export const generateEntity = ({
@@ -11,9 +11,9 @@ export const generateEntity = ({
   apiExtraModels,
   templateHelpers: t,
 }: GenerateEntityParam) => `
-${t.importStatements(imports)}
+${TemplateHelpers.importStatements(imports)}
 
-${t.if(apiExtraModels.length, t.apiExtraModels(apiExtraModels))}
+${TemplateHelpers.when(apiExtraModels.length, t.apiExtraModels(apiExtraModels))}
 export class ${t.entityName(model.name)} {
   ${t.fieldsToEntityProps(fields)}
 }

@@ -13,40 +13,35 @@ import {
   isRequiredWithDefaultValue,
   isUpdatedAt,
 } from '../field-classifiers';
-import {
-  concatIntoArray,
-  generateRelationInput,
-  getRelationScalars,
-  makeImportsFromPrismaClient,
-  mapDMMFToParsedField,
-  zipImportStatementParams,
-} from '../helpers';
+import { Helpers } from '../helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
 import type { TemplateHelpers } from '../template-helpers';
 import type {
-  Model,
-  UpdateDtoParams,
   ImportStatementParams,
+  Model,
   ParsedField,
+  UpdateDtoParams,
 } from '../types';
 
 interface ComputeUpdateDtoParamsParam {
   model: Model;
   allModels: Model[];
   templateHelpers: TemplateHelpers;
+  addExposePropertyDecorator: boolean;
 }
 export const computeUpdateDtoParams = ({
   model,
   allModels,
   templateHelpers,
+  addExposePropertyDecorator,
 }: ComputeUpdateDtoParamsParam): UpdateDtoParams => {
   let hasEnum = false;
   const imports: ImportStatementParams[] = [];
   const extraClasses: string[] = [];
   const apiExtraModels: string[] = [];
 
-  const relationScalarFields = getRelationScalars(model.fields);
+  const relationScalarFields = Helpers.getRelationScalars(model.fields);
   const relationScalarFieldNames = Object.keys(relationScalarFields);
 
   const fields = model.fields.reduce((result, field) => {
@@ -58,22 +53,24 @@ export const computeUpdateDtoParams = ({
       if (!isAnnotatedWithOneOf(field, DTO_RELATION_MODIFIERS_ON_UPDATE)) {
         return result;
       }
-      const relationInputType = generateRelationInput({
+      const relationInputType = Helpers.generateRelationInput({
         field,
         model,
         allModels,
         templateHelpers,
-        preAndSuffixClassName: templateHelpers.updateDtoName,
+        preAndSuffixClassName: (name: string) =>
+          templateHelpers.updateDtoName(name),
         canCreateAnnotation: DTO_RELATION_CAN_CRAEATE_ON_UPDATE,
         canConnectAnnotation: DTO_RELATION_CAN_CONNECT_ON_UPDATE,
+        addExposePropertyDecorator,
       });
 
       overrides.type = relationInputType.type;
       overrides.isList = false;
 
-      concatIntoArray(relationInputType.imports, imports);
-      concatIntoArray(relationInputType.generatedClasses, extraClasses);
-      concatIntoArray(relationInputType.apiExtraModels, apiExtraModels);
+      Helpers.concatIntoArray(relationInputType.imports, imports);
+      Helpers.concatIntoArray(relationInputType.generatedClasses, extraClasses);
+      Helpers.concatIntoArray(relationInputType.apiExtraModels, apiExtraModels);
     }
     if (relationScalarFieldNames.includes(name)) return result;
 
@@ -90,7 +87,7 @@ export const computeUpdateDtoParams = ({
 
     if (field.kind === 'enum') hasEnum = true;
 
-    return [...result, mapDMMFToParsedField(field, overrides)];
+    return [...result, Helpers.mapDMMFToParsedField(field, overrides)];
   }, [] as ParsedField[]);
 
   if (apiExtraModels.length || hasEnum) {
@@ -100,13 +97,13 @@ export const computeUpdateDtoParams = ({
     imports.unshift({ from: '@nestjs/swagger', destruct });
   }
 
-  const importPrismaClient = makeImportsFromPrismaClient(fields);
+  const importPrismaClient = Helpers.makeImportsFromPrismaClient(fields);
   if (importPrismaClient) imports.unshift(importPrismaClient);
 
   return {
     model,
     fields,
-    imports: zipImportStatementParams(imports),
+    imports: Helpers.zipImportStatementParams(imports),
     extraClasses,
     apiExtraModels,
   };

@@ -1,19 +1,35 @@
+import { logger } from '@prisma/internals';
+import { camel, kebab, pascal, snake } from 'case';
 import path from 'node:path';
-import { camel, pascal, kebab, snake } from 'case';
-import { logger } from '@prisma/sdk';
-import { makeHelpers } from './template-helpers';
+import { DTO_IGNORE_MODEL } from './annotations';
 import { computeModelParams } from './compute-model-params';
+import { isAnnotatedWith } from './field-classifiers';
 import { generateConnectDto } from './generate-connect-dto';
 import { generateCreateDto } from './generate-create-dto';
-import { generateUpdateDto } from './generate-update-dto';
-import { generateEntity } from './generate-entity';
-import { DTO_IGNORE_MODEL } from './annotations';
-import { isAnnotatedWith } from './field-classifiers';
+import { generateEntity, GenerateEntityParam } from './generate-entity';
+import {
+  generateUpdateDto,
+  GenerateUpdateDtoParam,
+} from './generate-update-dto';
+import { TemplateHelpers } from './template-helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
-import { NamingStyle, Model, WriteableFileSpecs } from './types';
+import { Model, NamingStyle, WriteableFileSpecs } from './types';
 
-interface RunParam {
+type SpecKey = 'connect' | 'create' | 'update' | 'entity';
+
+type SpecConfig = {
+  key: SpecKey;
+  dir: 'dto' | 'entity';
+  fn: (args: any) => string;
+  fileName: (name: string, withExt?: boolean) => string;
+  extra?: {
+    exportRelationModifierClasses: boolean;
+    addExposePropertyDecorator: boolean;
+  };
+};
+
+export interface RunParam {
   output: string;
   dmmf: DMMF.Document;
   exportRelationModifierClasses: boolean;
@@ -25,116 +41,129 @@ interface RunParam {
   entityPrefix: string;
   entitySuffix: string;
   fileNamingStyle: NamingStyle;
+  addExposePropertyDecorator: boolean;
 }
 
-export const run = ({
-  output,
-  dmmf,
-  ...options
-}: RunParam): WriteableFileSpecs[] => {
-  const {
-    exportRelationModifierClasses,
-    outputToNestJsResourceStructure,
-    fileNamingStyle = 'camel',
-    ...preAndSuffixes
-  } = options;
+export class NestJsDtoGenerator {
+  private readonly templateHelpers: TemplateHelpers;
 
-  const transformers: Record<NamingStyle, (str: string) => string> = {
-    camel,
-    kebab,
-    pascal,
-    snake,
-  };
+  constructor(private readonly params: RunParam) {
+    const { fileNamingStyle = 'camel', ...preAndSuffixes } = params;
+    const transformers: Record<NamingStyle, (s: string) => string> = {
+      camel,
+      kebab,
+      pascal,
+      snake,
+    };
+    this.templateHelpers = new TemplateHelpers({
+      transformFileNameCase: transformers[fileNamingStyle],
+      transformClassNameCase: pascal,
+      ...preAndSuffixes,
+    });
+  }
 
-  const transformFileNameCase = transformers[fileNamingStyle];
+  run(): WriteableFileSpecs[] {
+    const models = this.getFilteredModels();
+    return models.flatMap((model) => this.generateFilesForModel(model, models));
+  }
 
-  const templateHelpers = makeHelpers({
-    transformFileNameCase,
-    transformClassNameCase: pascal,
-    ...preAndSuffixes,
-  });
-  const allModels = dmmf.datamodel.models;
+  private getFilteredModels(): Model[] {
+    const { dmmf, output, outputToNestJsResourceStructure } = this.params;
+    return dmmf.datamodel.models
+      .filter((m) => !isAnnotatedWith(m, DTO_IGNORE_MODEL))
+      .map((model) => ({
+        ...model,
+        output: this.buildOutputPaths(
+          model.name,
+          output,
+          outputToNestJsResourceStructure,
+        ),
+      }));
+  }
 
-  const filteredModels: Model[] = allModels
-    .filter((model) => !isAnnotatedWith(model, DTO_IGNORE_MODEL))
-    // adds `output` information for each model so we can compute relative import paths
-    // this assumes that NestJS resource modules (more specifically their folders on disk) are named as `transformFileNameCase(model.name)`
-    .map((model) => ({
-      ...model,
-      output: {
-        dto: outputToNestJsResourceStructure
-          ? path.join(output, transformFileNameCase(model.name), 'dto')
-          : output,
-        entity: outputToNestJsResourceStructure
-          ? path.join(output, transformFileNameCase(model.name), 'entities')
-          : output,
-      },
-    }));
-
-  const modelFiles = filteredModels.map((model) => {
+  private generateFilesForModel(
+    model: Model,
+    allModels: Model[],
+  ): WriteableFileSpecs[] {
     logger.info(`Processing Model ${model.name}`);
 
+    const { addExposePropertyDecorator, exportRelationModifierClasses } =
+      this.params;
     const modelParams = computeModelParams({
       model,
-      allModels: filteredModels,
-      templateHelpers,
+      allModels,
+      templateHelpers: this.templateHelpers,
+      addExposePropertyDecorator,
     });
 
-    // generate connect-model.dto.ts
-    const connectDto = {
-      fileName: path.join(
-        model.output.dto,
-        templateHelpers.connectDtoFilename(model.name, true),
-      ),
-      content: generateConnectDto({
-        ...modelParams.connect,
-        templateHelpers,
-      }),
-    };
+    const configs: SpecConfig[] = [
+      {
+        key: 'connect',
+        dir: 'dto',
+        fn: generateConnectDto,
+        fileName: this.templateHelpers.connectDtoFilename.bind(
+          this.templateHelpers,
+        ),
+      },
+      {
+        key: 'create',
+        dir: 'dto',
+        fn: generateCreateDto,
+        fileName: this.templateHelpers.createDtoFilename.bind(
+          this.templateHelpers,
+        ),
+        extra: { exportRelationModifierClasses, addExposePropertyDecorator },
+      },
+      {
+        key: 'update',
+        dir: 'dto',
+        fn: generateUpdateDto,
+        fileName: this.templateHelpers.updateDtoFilename.bind(
+          this.templateHelpers,
+        ),
+        extra: { exportRelationModifierClasses, addExposePropertyDecorator },
+      },
+      {
+        key: 'entity',
+        dir: 'entity',
+        fn: generateEntity,
+        fileName: this.templateHelpers.entityFilename.bind(
+          this.templateHelpers,
+        ),
+      },
+    ];
 
-    // generate create-model.dto.ts
-    const createDto = {
-      fileName: path.join(
-        model.output.dto,
-        templateHelpers.createDtoFilename(model.name, true),
-      ),
-      content: generateCreateDto({
-        ...modelParams.create,
-        exportRelationModifierClasses,
-        templateHelpers,
-      }),
-    };
-    // TODO generate create-model.struct.ts
+    return configs
+      .map((config) => {
+        const { key, dir, fn, fileName, extra } = config;
 
-    // generate update-model.dto.ts
-    const updateDto = {
-      fileName: path.join(
-        model.output.dto,
-        templateHelpers.updateDtoFilename(model.name, true),
-      ),
-      content: generateUpdateDto({
-        ...modelParams.update,
-        exportRelationModifierClasses,
-        templateHelpers,
-      }),
-    };
-    // TODO generate update-model.struct.ts
+        const content = fn({
+          ...modelParams[key],
+          templateHelpers: this.templateHelpers,
+          ...(extra ?? {}),
+        });
 
-    // generate model.entity.ts
-    const entity = {
-      fileName: path.join(
-        model.output.entity,
-        templateHelpers.entityFilename(model.name, true),
-      ),
-      content: generateEntity({
-        ...modelParams.entity,
-        templateHelpers,
-      }),
-    };
-    // TODO generate model.struct.ts
+        return {
+          fileName: path.join(model.output[dir], fileName(model.name, true)),
+          content,
+        };
+      })
+      .filter((file): file is WriteableFileSpecs => file !== null);
+  }
 
-    return [connectDto, createDto, updateDto, entity];
-  });
+  private buildOutputPaths(
+    modelName: string,
+    baseOutput: string,
+    nested: boolean,
+  ): { dto: string; entity: string } {
+    const segment = this.templateHelpers.transformFileNameCase(modelName);
+    const dtoDir = nested ? path.join(baseOutput, segment, 'dto') : baseOutput;
+    const entityDir = nested
+      ? path.join(baseOutput, segment, 'entities')
+      : baseOutput;
+    return { dto: dtoDir, entity: entityDir };
+  }
+}
 
-  return [...modelFiles].flat();
-};
+export const run = (params: RunParam): WriteableFileSpecs[] =>
+  new NestJsDtoGenerator(params).run();

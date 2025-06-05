@@ -1,9 +1,10 @@
-import type { TemplateHelpers } from './template-helpers';
+import { TemplateHelpers } from './template-helpers';
 import type { UpdateDtoParams } from './types';
 
-interface GenerateUpdateDtoParam extends UpdateDtoParams {
+export interface GenerateUpdateDtoParam extends UpdateDtoParams {
   exportRelationModifierClasses: boolean;
   templateHelpers: TemplateHelpers;
+  addExposePropertyDecorator: boolean;
 }
 export const generateUpdateDto = ({
   model,
@@ -13,17 +14,20 @@ export const generateUpdateDto = ({
   apiExtraModels,
   exportRelationModifierClasses,
   templateHelpers: t,
+  addExposePropertyDecorator,
 }: GenerateUpdateDtoParam) => `
-${t.importStatements(imports)}
+// ${TemplateHelpers.importStatements(imports)}
 
-${t.each(
+${TemplateHelpers.each(
   extraClasses,
-  exportRelationModifierClasses ? (content) => `export ${content}` : t.echo,
+  exportRelationModifierClasses
+    ? (content) => `export ${content}`
+    : TemplateHelpers.echo,
   '\n',
 )}
 
-${t.if(apiExtraModels.length, t.apiExtraModels(apiExtraModels))}
+${TemplateHelpers.when(apiExtraModels.length, t.apiExtraModels(apiExtraModels))}
 export class ${t.updateDtoName(model.name)} {
-  ${t.fieldsToDtoProps(fields, true)}
+  ${t.fieldsToDtoProps(fields, true, false, addExposePropertyDecorator)}
 }
 `;

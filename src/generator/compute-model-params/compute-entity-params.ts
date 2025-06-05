@@ -1,14 +1,7 @@
 import path from 'node:path';
-import slash from 'slash';
 import { DTO_ENTITY_HIDDEN, DTO_RELATION_REQUIRED } from '../annotations';
 import { isAnnotatedWith, isRelation, isRequired } from '../field-classifiers';
-import {
-  getRelationScalars,
-  getRelativePath,
-  makeImportsFromPrismaClient,
-  mapDMMFToParsedField,
-  zipImportStatementParams,
-} from '../helpers';
+import { Helpers } from '../helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
 import type {
@@ -32,7 +25,7 @@ export const computeEntityParams = ({
   const imports: ImportStatementParams[] = [];
   const apiExtraModels: string[] = [];
 
-  const relationScalarFields = getRelationScalars(model.fields);
+  const relationScalarFields = Helpers.getRelationScalars(model.fields);
   const relationScalarFieldNames = Object.keys(relationScalarFields);
 
   const fields = model.fields.reduce((result, field) => {
@@ -52,8 +45,8 @@ export const computeEntityParams = ({
       overrides.isNullable = field.isList
         ? false
         : field.isRequired
-        ? false
-        : !isAnnotatedWith(field, DTO_RELATION_REQUIRED);
+          ? false
+          : !isAnnotatedWith(field, DTO_RELATION_REQUIRED);
 
       // don't try to import the class we're preparing params for
       if (field.type !== model.name) {
@@ -67,12 +60,11 @@ export const computeEntityParams = ({
           );
 
         const importName = templateHelpers.entityName(field.type);
-        const importFrom = slash(
-          `${getRelativePath(
-            model.output.entity,
-            modelToImportFrom.output.entity,
-          )}${path.sep}${templateHelpers.entityFilename(field.type)}`,
+        const relPath = Helpers.getRelativePath(
+          model.output.entity,
+          modelToImportFrom.output.entity,
         );
+        const importFrom = `${relPath}/${templateHelpers.entityFilename(field.type)}`;
 
         // don't double-import the same thing
         // TODO should check for match on any import name ( - no matter where from)
@@ -110,19 +102,19 @@ export const computeEntityParams = ({
       overrides.isNullable = !isAnyRelationRequired;
     }
 
-    return [...result, mapDMMFToParsedField(field, overrides)];
+    return [...result, Helpers.mapDMMFToParsedField(field, overrides)];
   }, [] as ParsedField[]);
 
   if (apiExtraModels.length)
     imports.unshift({ from: '@nestjs/swagger', destruct: ['ApiExtraModels'] });
 
-  const importPrismaClient = makeImportsFromPrismaClient(fields);
+  const importPrismaClient = Helpers.makeImportsFromPrismaClient(fields);
   if (importPrismaClient) imports.unshift(importPrismaClient);
 
   return {
     model,
     fields,
-    imports: zipImportStatementParams(imports),
+    imports: Helpers.zipImportStatementParams(imports),
     apiExtraModels,
   };
 };
