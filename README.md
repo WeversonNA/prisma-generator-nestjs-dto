@@ -1,7 +1,3 @@
-# Project Status: Looking for new maintainers!
-
-This project is looking for maintainers.
-
 We are not using this package anymore ourselves, so we can no longer validate/review/test any incoming PRs anymore and ensure correct functionality.
 
 If you are an experienced open source contributor and are interested in taking over maintenance, please open a GitHub issue and let's discuss how to proceed.

@@ -138,7 +138,9 @@ export class DecoratorStrategy {
   );
 
   verifyIfDecoratorIsValid(decoratorName: string): boolean {
-    return this.decoratorImportMap.has(decoratorName);
+    const match = decoratorName.match(/^@?(\w+)/);
+    const name = match ? match[1] : decoratorName;
+    return this.decoratorImportMap.has(name);
   }
 
   verifyDocumentation(doc: string): string {
