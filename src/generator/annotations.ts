@@ -12,7 +12,6 @@ export const DTO_RELATION_CAN_CRAEATE_ON_UPDATE =
   /@DtoRelationCanCreateOnUpdate/;
 export const DTO_RELATION_CAN_CONNECT_ON_UPDATE =
   /@DtoRelationCanConnectOnUpdate/;
-export const DTO_API_PROPERTY = /@ApiProperty\((.*)\)/;
 export const DTO_RELATION_MODIFIERS = [
   DTO_RELATION_CAN_CRAEATE_ON_CREATE,
   DTO_RELATION_CAN_CONNECT_ON_CREATE,

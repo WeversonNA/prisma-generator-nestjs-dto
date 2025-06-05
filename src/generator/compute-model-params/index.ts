@@ -10,11 +10,13 @@ interface ComputeModelParamsParam {
   model: Model;
   allModels: Model[];
   templateHelpers: TemplateHelpers;
+  addExposePropertyDecorator: boolean;
 }
 export const computeModelParams = ({
   model,
   allModels,
   templateHelpers,
+  addExposePropertyDecorator,
 }: ComputeModelParamsParam): ModelParams => ({
   // TODO find out if model needs `ConnectDTO`
   connect: computeConnectDtoParams({ model }),
@@ -22,12 +24,14 @@ export const computeModelParams = ({
     model,
     allModels, // ? should this be `allModels: models` instead
     templateHelpers,
+    addExposePropertyDecorator,
   }),
 
   update: computeUpdateDtoParams({
     model,
     allModels,
     templateHelpers,
+    addExposePropertyDecorator,
   }),
   entity: computeEntityParams({ model, allModels, templateHelpers }),
 });

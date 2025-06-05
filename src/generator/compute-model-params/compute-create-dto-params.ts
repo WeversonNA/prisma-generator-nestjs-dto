@@ -14,40 +14,35 @@ import {
   isRequiredWithDefaultValue,
   isUpdatedAt,
 } from '../field-classifiers';
-import {
-  concatIntoArray,
-  generateRelationInput,
-  getRelationScalars,
-  makeImportsFromPrismaClient,
-  mapDMMFToParsedField,
-  zipImportStatementParams,
-} from '../helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
-import type { TemplateHelpers } from '../template-helpers';
+import { TemplateHelpers } from '../template-helpers';
 import type {
   Model,
   CreateDtoParams,
   ImportStatementParams,
   ParsedField,
 } from '../types';
+import { Helpers } from '../helpers';
 
 interface ComputeCreateDtoParamsParam {
   model: Model;
   allModels: Model[];
   templateHelpers: TemplateHelpers;
+  addExposePropertyDecorator: boolean;
 }
 export const computeCreateDtoParams = ({
   model,
   allModels,
   templateHelpers,
+  addExposePropertyDecorator,
 }: ComputeCreateDtoParamsParam): CreateDtoParams => {
   let hasEnum = false;
   const imports: ImportStatementParams[] = [];
   const apiExtraModels: string[] = [];
   const extraClasses: string[] = [];
 
-  const relationScalarFields = getRelationScalars(model.fields);
+  const relationScalarFields = Helpers.getRelationScalars(model.fields);
   const relationScalarFieldNames = Object.keys(relationScalarFields);
 
   const fields = model.fields.reduce((result, field) => {
@@ -59,14 +54,16 @@ export const computeCreateDtoParams = ({
       if (!isAnnotatedWithOneOf(field, DTO_RELATION_MODIFIERS_ON_CREATE)) {
         return result;
       }
-      const relationInputType = generateRelationInput({
+      const relationInputType = Helpers.generateRelationInput({
         field,
         model,
         allModels,
         templateHelpers,
-        preAndSuffixClassName: templateHelpers.createDtoName,
+        preAndSuffixClassName: (name: string) =>
+          templateHelpers.createDtoName(name),
         canCreateAnnotation: DTO_RELATION_CAN_CRAEATE_ON_CREATE,
         canConnectAnnotation: DTO_RELATION_CAN_CONNECT_ON_CREATE,
+        addExposePropertyDecorator,
       });
 
       const isDtoRelationRequired = isAnnotatedWith(
@@ -83,9 +80,9 @@ export const computeCreateDtoParams = ({
       // since relation input field types are translated to something like { connect: Foo[] }, the field type itself is not a list anymore.
       // You provide list input in the nested `connect` or `create` properties.
       overrides.isList = false;
-      concatIntoArray(relationInputType.imports, imports);
-      concatIntoArray(relationInputType.generatedClasses, extraClasses);
-      concatIntoArray(relationInputType.apiExtraModels, apiExtraModels);
+      Helpers.concatIntoArray(relationInputType.imports, imports);
+      Helpers.concatIntoArray(relationInputType.generatedClasses, extraClasses);
+      Helpers.concatIntoArray(relationInputType.apiExtraModels, apiExtraModels);
     }
     if (relationScalarFieldNames.includes(name)) return result;
 
@@ -105,23 +102,28 @@ export const computeCreateDtoParams = ({
 
     if (field.kind === 'enum') hasEnum = true;
 
-    return [...result, mapDMMFToParsedField(field, overrides)];
+    return [...result, Helpers.mapDMMFToParsedField(field, overrides)];
   }, [] as ParsedField[]);
 
-  if (apiExtraModels.length || hasEnum) {
+  const hasApiPropertyDoc = TemplateHelpers.hasSomeApiPropertyDoc(fields);
+
+  if (apiExtraModels.length || hasEnum || hasApiPropertyDoc) {
     const destruct = [];
     if (apiExtraModels.length) destruct.push('ApiExtraModels');
     if (hasEnum) destruct.push('ApiProperty');
+    if (hasApiPropertyDoc) {
+      destruct.push('ApiProperty');
+    }
     imports.unshift({ from: '@nestjs/swagger', destruct });
   }
 
-  const importPrismaClient = makeImportsFromPrismaClient(fields);
+  const importPrismaClient = Helpers.makeImportsFromPrismaClient(fields);
   if (importPrismaClient) imports.unshift(importPrismaClient);
 
   return {
     model,
     fields,
-    imports: zipImportStatementParams(imports),
+    imports: Helpers.zipImportStatementParams(imports),
     extraClasses,
     apiExtraModels,
   };

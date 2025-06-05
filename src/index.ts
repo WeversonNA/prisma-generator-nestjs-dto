@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import makeDir from 'make-dir';
 import { generatorHandler } from '@prisma/generator-helper';
-import { parseEnvValue } from '@prisma/sdk';
+import { parseEnvValue } from '@prisma/internals';
 import { run } from './generator';
 import type { GeneratorOptions } from '@prisma/generator-helper';
 import type { WriteableFileSpecs, NamingStyle } from './generator/types';
 import { MergeContent } from './merge-content';
+import { format } from 'prettier';
 
 export const stringToBoolean = (input: string, defaultValue = false) => {
   if (input === 'true') {
@@ -50,6 +50,11 @@ export const generate = (options: GeneratorOptions) => {
     false,
   );
 
+  const addExposePropertyDecorator = stringToBoolean(
+    options.generator.config.addExposePropertyDecorator,
+    false,
+  );
+
   const supportedFileNamingStyles = ['kebab', 'camel', 'pascal', 'snake'];
   const isSupportedFileNamingStyle = (style: string): style is NamingStyle =>
     supportedFileNamingStyles.includes(style);
@@ -74,6 +79,7 @@ export const generate = (options: GeneratorOptions) => {
     entityPrefix,
     entitySuffix,
     fileNamingStyle,
+    addExposePropertyDecorator,
   });
 
   const indexCollections: Record<string, WriteableFileSpecs> = {};
@@ -99,7 +105,7 @@ export const generate = (options: GeneratorOptions) => {
     results
       .concat(Object.values(indexCollections))
       .map(async ({ fileName, content }) => {
-        await makeDir(path.dirname(fileName));
+        await fs.mkdir(path.dirname(fileName), { recursive: true });
 
         const fileExists = await fs
           .access(fileName)
@@ -108,7 +114,12 @@ export const generate = (options: GeneratorOptions) => {
         const writeContent = fileExists
           ? mergeContent.merge(await fs.readFile(fileName, 'utf8'), content)
           : content;
-        return fs.writeFile(fileName, writeContent);
+
+        const formattedFile = await format(writeContent, {
+          parser: 'typescript',
+          singleQuote: true,
+        });
+        return fs.writeFile(fileName, formattedFile);
       }),
   );
 };

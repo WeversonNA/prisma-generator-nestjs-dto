@@ -6,7 +6,7 @@ datasource db {
 generator nestjsDto {
   provider                        = "node -r ts-node/register/transpile-only src/cli.ts"
   output                          = "../src/@generated/prisma-generator-nestjs-dto"
-  outputToNestJsResourceStructure = "false"
+  outputToNestJsResourceStructure = "true"
   exportRelationModifierClasses   = "true"
   reExport                        = "true"
   createDtoPrefix                 = "Create"
@@ -14,11 +14,16 @@ generator nestjsDto {
   dtoSuffix                       = "Dto"
   entityPrefix                    = ""
   entitySuffix                    = ""
+  addExposePropertyDecorator      = "true"
   fileNamingStyle                 = "camel"
 }
 
 model Product {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// @ApiProperty({description: "The unique identifier for the product." })
+  /// @IsUUID('4', {message: 'Invalid UUID format'})
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  /// @ApiProperty({description: "The name of the product 1."})
   name        String   @db.VarChar(255)
   /// @ApiProperty({description: "A detailed description of the product."})
   description String   @db.VarChar(1024)
@@ -27,7 +32,8 @@ model Product {
   /// @ApiProperty({description: "A list of tags or keywords associated with the product."})
   highlighted Boolean? @default(false)
   reviewCount Int?     @default(0)
-  attributes  Json?
+  // attributes  Json?
+  /// @Transform(({ value }) => value ? parseFloat(value) : null)
   score       Float?
   categoryId  String   @db.Uuid
   companyId   String   @db.Uuid

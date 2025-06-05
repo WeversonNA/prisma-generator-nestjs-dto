@@ -1,231 +1,313 @@
+import { DecoratorStrategy } from './decorator-strategy';
 import { ImportStatementParams, ParsedField } from './types';
 
-const PrismaScalarToTypeScript: Record<string, string> = {
-  String: 'string',
-  Boolean: 'boolean',
-  Int: 'number',
-  // [Working with BigInt](https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields#working-with-bigint)
-  BigInt: 'bigint',
-  Float: 'number',
-  // [Working with Decimal](https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields#working-with-decimal)
-  Decimal: 'Prisma.Decimal',
-  DateTime: 'Date',
-  // [working with JSON fields](https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields)
-  Json: 'Prisma.JsonValue',
-  // [Working with Bytes](https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields#working-with-bytes)
-  Bytes: 'Buffer',
-};
-
-const knownPrismaScalarTypes = Object.keys(PrismaScalarToTypeScript);
-
-export const scalarToTS = (scalar: string, useInputTypes = false): string => {
-  if (!knownPrismaScalarTypes.includes(scalar)) {
-    throw new Error(`Unrecognized scalar type: ${scalar}`);
-  }
-
-  // [Working with JSON fields](https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields)
-  // supports different types for input / output. `Prisma.InputJsonValue` extends `Prisma.JsonValue` with `undefined`
-  if (useInputTypes && scalar === 'Json') {
-    return 'Prisma.InputJsonValue';
-  }
-
-  return PrismaScalarToTypeScript[scalar];
-};
-
-export const echo = (input: string) => input;
-
-export const when = (condition: any, thenTemplate: string, elseTemplate = '') =>
-  condition ? thenTemplate : elseTemplate;
-
-export const unless = (
-  condition: any,
-  thenTemplate: string,
-  elseTemplate = '',
-) => (!condition ? thenTemplate : elseTemplate);
-
-export const each = <T = any>(
-  arr: Array<T>,
-  fn: (item: T) => string,
-  joinWith = '',
-) => arr.map(fn).join(joinWith);
-
-export const importStatement = (input: ImportStatementParams) => {
-  const { from, destruct = [], default: defaultExport } = input;
-  const fragments = ['import'];
-  if (defaultExport) {
-    if (typeof defaultExport === 'string') {
-      fragments.push(defaultExport);
-    } else {
-      fragments.push(`* as ${defaultExport['*']}`);
-    }
-  }
-  if (destruct.length) {
-    if (defaultExport) {
-      fragments.push(',');
-    }
-    fragments.push(
-      `{${destruct.flatMap((item) => {
-        if (typeof item === 'string') return item;
-        return Object.entries(item).map(([key, value]) => `${key} as ${value}`);
-      })}}`,
-    );
-  }
-
-  fragments.push(`from '${from}'`);
-
-  return fragments.join(' ');
-};
-
-export const importStatements = (items: ImportStatementParams[]) =>
-  `${each(items, importStatement, '\n')}`;
-
-interface MakeHelpersParam {
+export interface TemplateHelpersOptions {
   connectDtoPrefix: string;
   createDtoPrefix: string;
   updateDtoPrefix: string;
   dtoSuffix: string;
   entityPrefix: string;
   entitySuffix: string;
-  transformClassNameCase?: (item: string) => string;
-  transformFileNameCase?: (item: string) => string;
+  transformClassNameCase?: (input: string) => string;
+  transformFileNameCase?: (input: string) => string;
 }
-export const makeHelpers = ({
-  connectDtoPrefix,
-  createDtoPrefix,
-  updateDtoPrefix,
-  dtoSuffix,
-  entityPrefix,
-  entitySuffix,
-  transformClassNameCase = echo,
-  transformFileNameCase = echo,
-}: MakeHelpersParam) => {
-  const className = (name: string, prefix = '', suffix = '') =>
-    `${prefix}${transformClassNameCase(name)}${suffix}`;
-  const fileName = (
-    name: string,
-    prefix = '',
-    suffix = '',
-    withExtension = false,
-  ) =>
-    `${prefix}${transformFileNameCase(name)}${suffix}${when(
-      withExtension,
-      '.ts',
-    )}`;
 
-  const entityName = (name: string) =>
-    className(name, entityPrefix, entitySuffix);
-  const connectDtoName = (name: string) =>
-    className(name, connectDtoPrefix, dtoSuffix);
-  const createDtoName = (name: string) =>
-    className(name, createDtoPrefix, dtoSuffix);
-  const updateDtoName = (name: string) =>
-    className(name, updateDtoPrefix, dtoSuffix);
+export class TemplateHelpers {
+  private readonly connectDtoPrefix: string;
+  private readonly createDtoPrefix: string;
+  private readonly updateDtoPrefix: string;
+  private readonly dtoSuffix: string;
+  private readonly entityPrefix: string;
+  private readonly entitySuffix: string;
+  public readonly transformClassNameCase: (input: string) => string;
+  public readonly transformFileNameCase: (input: string) => string;
+  private readonly decoratorStrategy = new DecoratorStrategy();
 
-  const connectDtoFilename = (name: string, withExtension = false) =>
-    fileName(name, 'connect-', '.dto', withExtension);
-
-  const createDtoFilename = (name: string, withExtension = false) =>
-    fileName(name, 'create-', '.dto', withExtension);
-
-  const updateDtoFilename = (name: string, withExtension = false) =>
-    fileName(name, 'update-', '.dto', withExtension);
-
-  const entityFilename = (name: string, withExtension = false) =>
-    fileName(name, undefined, '.entity', withExtension);
-
-  const fieldType = (field: ParsedField, toInputType = false) =>
-    `${
-      field.kind === 'scalar'
-        ? scalarToTS(field.type, toInputType)
-        : field.kind === 'enum' || field.kind === 'relation-input'
-        ? field.type
-        : entityName(field.type)
-    }${when(field.isList, '[]')}`;
-
-  const isApiPropertyDocument = (field: ParsedField): boolean => {
-    return !!field?.documentation?.includes('@ApiProperty');
+  static readonly PrismaScalarToTypeScript: Record<string, string> = {
+    String: 'string',
+    Boolean: 'boolean',
+    Int: 'number',
+    BigInt: 'bigint',
+    Float: 'number',
+    Decimal: 'Prisma.Decimal',
+    DateTime: 'Date',
+    Json: 'Prisma.JsonValue',
+    Bytes: 'Buffer',
   };
 
-  const addApiProperty = (field: ParsedField): string => {
-    const isApi = isApiPropertyDocument(field);
-    if (field.kind === 'enum') {
-      return isApi
-        ? `${field.documentation}\n`
-        : `@ApiProperty({ enum: ${fieldType(field)} })\n`;
-    }
-    if (['scalar', 'relation-input', 'object'].includes(field.kind)) {
-      return isApi ? `${field.documentation}\n` : '';
-    }
-    return '';
-  };
+  static readonly knownPrismaScalarTypes: string[] = Object.keys(
+    TemplateHelpers.PrismaScalarToTypeScript,
+  );
 
-  const fieldToDtoProp = (
-    field: ParsedField,
-    useInputTypes = false,
-    forceOptional = false,
-  ) =>
-    `${addApiProperty(field)}${field.name}${unless(
-      field.isRequired && !forceOptional,
-      '?',
-    )}: ${fieldType(field, useInputTypes)};`;
-
-  const fieldsToDtoProps = (
-    fields: ParsedField[],
-    useInputTypes = false,
-    forceOptional = false,
-  ) =>
-    `${each(
-      fields,
-      (field) => fieldToDtoProp(field, useInputTypes, forceOptional),
-      '\n',
-    )}`;
-
-  const fieldToEntityProp = (field: ParsedField) =>
-    `${addApiProperty(field)}${field.name}${unless(
-      field.isRequired,
-      '?',
-    )}: ${fieldType(field)} ${when(field.isNullable, ' | null')};`;
-
-  const fieldsToEntityProps = (fields: ParsedField[]) =>
-    `${each(fields, (field) => fieldToEntityProp(field), '\n')}`;
-
-  const apiExtraModels = (names: string[]) =>
-    `@ApiExtraModels(${names.map(entityName)})`;
-
-  return {
-    config: {
+  constructor(options: TemplateHelpersOptions) {
+    const {
       connectDtoPrefix,
       createDtoPrefix,
       updateDtoPrefix,
       dtoSuffix,
       entityPrefix,
       entitySuffix,
-    },
-    apiExtraModels,
-    entityName,
-    connectDtoName,
-    createDtoName,
-    updateDtoName,
-    connectDtoFilename,
-    createDtoFilename,
-    updateDtoFilename,
-    entityFilename,
-    each,
-    echo,
-    fieldsToDtoProps,
-    fieldToDtoProp,
-    fieldToEntityProp,
-    fieldsToEntityProps,
-    fieldType,
-    for: each,
-    if: when,
-    importStatement,
-    importStatements,
-    transformClassNameCase,
-    transformFileNameCase,
-    unless,
-    when,
-  };
-};
+      transformClassNameCase = (s) => s,
+      transformFileNameCase = (s) => s,
+    } = options;
 
-export type TemplateHelpers = ReturnType<typeof makeHelpers>;
+    this.connectDtoPrefix = connectDtoPrefix;
+    this.createDtoPrefix = createDtoPrefix;
+    this.updateDtoPrefix = updateDtoPrefix;
+    this.dtoSuffix = dtoSuffix;
+    this.entityPrefix = entityPrefix;
+    this.entitySuffix = entitySuffix;
+    this.transformClassNameCase = transformClassNameCase;
+    this.transformFileNameCase = transformFileNameCase;
+  }
+
+  // ---- Static Helpers ----
+
+  static scalarToTS(scalar: string, useInputTypes = false): string {
+    if (!TemplateHelpers.knownPrismaScalarTypes.includes(scalar)) {
+      throw new Error(`Unrecognized scalar type: ${scalar}`);
+    }
+    if (useInputTypes && scalar === 'Json') {
+      return 'Prisma.InputJsonValue';
+    }
+    return TemplateHelpers.PrismaScalarToTypeScript[scalar];
+  }
+
+  static echo(input: string): string {
+    return input;
+  }
+
+  static when(condition: unknown, thenTpl: string, elseTpl = ''): string {
+    return condition ? thenTpl : elseTpl;
+  }
+
+  static unless(condition: unknown, thenTpl: string, elseTpl = ''): string {
+    return !condition ? thenTpl : elseTpl;
+  }
+
+  static each<T>(arr: T[], fn: (item: T) => string, joinWith = ''): string {
+    return arr.map(fn).join(joinWith);
+  }
+
+  static importStatement(input: ImportStatementParams): string {
+    const { from, destruct = [], default: def } = input;
+    const parts: string[] = ['import'];
+
+    if (def) {
+      parts.push(typeof def === 'string' ? def : `* as ${def['*']}`);
+    }
+
+    if (destruct.length) {
+      if (def) parts.push(',');
+      const inside = destruct
+        .flatMap((item) =>
+          typeof item === 'string'
+            ? [item]
+            : Object.entries(item).map(
+                ([orig, alias]) => `${orig} as ${alias}`,
+              ),
+        )
+        .join(', ');
+      parts.push(`{ ${inside} }`);
+    }
+
+    parts.push(`from '${from}'`);
+    return parts.join(' ');
+  }
+
+  static importStatements(items: ImportStatementParams[]): string {
+    return TemplateHelpers.each(items, TemplateHelpers.importStatement, '\n');
+  }
+
+  // ---- Instance Helpers ----
+
+  private className(name: string, prefix = '', suffix = ''): string {
+    return `${prefix}${this.transformClassNameCase(name)}${suffix}`;
+  }
+
+  private fileName(
+    name: string,
+    prefix = '',
+    suffix = '',
+    withExt = false,
+  ): string {
+    return `${prefix}${this.transformFileNameCase(
+      name,
+    )}${suffix}${TemplateHelpers.when(withExt, '.ts')}`;
+  }
+
+  entityName(name: string): string {
+    return this.className(name, this.entityPrefix, this.entitySuffix);
+  }
+
+  connectDtoName(name: string): string {
+    return this.className(name, this.connectDtoPrefix, this.dtoSuffix);
+  }
+
+  createDtoName(name: string): string {
+    return this.className(name, this.createDtoPrefix, this.dtoSuffix);
+  }
+
+  updateDtoName(name: string): string {
+    return this.className(name, this.updateDtoPrefix, this.dtoSuffix);
+  }
+
+  connectDtoFilename(name: string, withExt = false): string {
+    return this.fileName(name, 'connect-', '.dto', withExt);
+  }
+
+  createDtoFilename(name: string, withExt = false): string {
+    return this.fileName(name, 'create-', '.dto', withExt);
+  }
+
+  updateDtoFilename(name: string, withExt = false): string {
+    return this.fileName(name, 'update-', '.dto', withExt);
+  }
+
+  entityFilename(name: string, withExt = false): string {
+    return this.fileName(name, undefined, '.entity', withExt);
+  }
+
+  fieldType(field: ParsedField, toInputType = false): string {
+    switch (field.kind) {
+      case 'scalar':
+        return TemplateHelpers.scalarToTS(field.type, toInputType);
+      case 'enum':
+      case 'relation-input':
+        return field.type;
+      default:
+        return `${this.entityName(field.type)}${TemplateHelpers.when(
+          field.isList,
+          '[]',
+        )}`;
+    }
+  }
+
+  static hasSomeApiPropertyDoc(fields: ParsedField[]): boolean {
+    return fields.some((f) => TemplateHelpers.hasApiPropertyDoc(f));
+  }
+
+  static hasApiPropertyDoc(field: ParsedField): boolean {
+    return Boolean(field.documentation?.includes('@ApiProperty'));
+  }
+
+  private addDecorator(field: ParsedField, isEntity: boolean = false): string {
+    return isEntity
+      ? this.buildEntityDecorator(field)
+      : this.buildDtoDecorator(field);
+  }
+
+  private buildEntityDecorator(field: ParsedField): string {
+    if (!TemplateHelpers.hasApiPropertyDoc(field)) {
+      return '';
+    }
+    const apiPropertyLines = (field.documentation ?? '')
+      .split('\n')
+      .filter((line) => line.includes('@ApiProperty'))
+      .map((line) => line.trim());
+    return apiPropertyLines.join('\n') + (apiPropertyLines.length ? '\n' : '');
+  }
+
+  private buildDtoDecorator(field: ParsedField): string {
+    if (field.kind === 'enum') {
+      return this.buildEnumDecorator(field);
+    }
+    if (['scalar', 'relation-input', 'object'].includes(field.kind)) {
+      return this.buildFieldDecorator(field);
+    }
+    return '';
+  }
+
+  private buildEnumDecorator(field: ParsedField): string {
+    const isValid = this.decoratorStrategy.verifyIfDecoratorIsValid(
+      field.documentation ?? '',
+    );
+    return isValid
+      ? `${field.documentation}\n`
+      : `@ApiProperty({ enum: ${this.fieldType(field)} })\n`;
+  }
+
+  private buildFieldDecorator(field: ParsedField): string {
+    const isValid = this.decoratorStrategy.verifyIfDecoratorIsValid(
+      field.documentation ?? '',
+    );
+    return isValid ? `${field.documentation}\n` : '';
+  }
+
+  fieldToDtoProp(
+    field: ParsedField,
+    useInputTypes = false,
+    forceOptional = false,
+    addExposePropertyDecorator = false,
+  ): string {
+    const optionalMark = TemplateHelpers.unless(
+      field.isRequired && !forceOptional,
+      '?',
+    );
+
+    return (
+      this.addDecorator(field) +
+      (addExposePropertyDecorator ? `@Expose()\n` : '') +
+      `${field.name}${optionalMark}: ${this.fieldType(field, useInputTypes)};`
+    );
+  }
+
+  fieldsToDtoProps(
+    fields: ParsedField[],
+    useInputTypes = false,
+    forceOptional = false,
+    addExposePropertyDecorator = false,
+  ): string {
+    return TemplateHelpers.each(
+      fields,
+      (f) =>
+        this.fieldToDtoProp(
+          f,
+          useInputTypes,
+          forceOptional,
+          addExposePropertyDecorator,
+        ),
+      '\n',
+    );
+  }
+
+  fieldToEntityProp(field: ParsedField): string {
+    const opt = TemplateHelpers.unless(field.isRequired, '?');
+    const nullable = TemplateHelpers.when(field.isNullable, ' | null');
+    return (
+      this.addDecorator(field) +
+      `${field.name}${opt}: ${this.fieldType(field)}${nullable};`
+    );
+  }
+
+  fieldsToEntityProps(fields: ParsedField[]): string {
+    return TemplateHelpers.each(fields, (f) => this.fieldToEntityProp(f), '\n');
+  }
+
+  apiExtraModels(names: string[]): string {
+    const list = names.map((n) => this.entityName(n)).join(', ');
+    return `@ApiExtraModels(${list})`;
+  }
+
+  get config(): Omit<
+    TemplateHelpersOptions,
+    'transformClassNameCase' | 'transformFileNameCase'
+  > {
+    const {
+      connectDtoPrefix,
+      createDtoPrefix,
+      updateDtoPrefix,
+      dtoSuffix,
+      entityPrefix,
+      entitySuffix,
+    } = this;
+    return {
+      connectDtoPrefix,
+      createDtoPrefix,
+      updateDtoPrefix,
+      dtoSuffix,
+      entityPrefix,
+      entitySuffix,
+    };
+  }
+}
