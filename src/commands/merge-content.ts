@@ -6,7 +6,7 @@ import {
   ImportDeclaration,
   PropertyDeclaration,
 } from 'ts-morph';
-import { DecoratorStrategy } from './generator/decorator-strategy';
+import { DecoratorStrategy } from '../generators/decorator-strategy';
 
 export class MergeContent {
   private readonly decoratorStrategy: DecoratorStrategy =
@@ -58,7 +58,7 @@ export class MergeContent {
         arguments: genDec.getArguments().map((a) => a.getText()),
       });
       const getValidatorAndImports =
-        this.decoratorStrategy.getValidatorAndImports(name);
+        this.decoratorStrategy.getValidDecoratorAndImports(name);
       if (!getValidatorAndImports?.importPath) continue;
 
       this.ensureImport(
@@ -76,7 +76,6 @@ export class MergeContent {
     const genProps = genCls.getProperties();
     const genNames = genProps.map((p) => p.getName());
 
-    // add or update
     for (const genProp of genProps) {
       const name = genProp.getName();
       const existProp = existCls.getProperty(name);
@@ -93,7 +92,6 @@ export class MergeContent {
       }
     }
 
-    // remove old
     for (const existProp of existCls.getProperties()) {
       const name = existProp.getName();
       if (!genNames.includes(name)) {

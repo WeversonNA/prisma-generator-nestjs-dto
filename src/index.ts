@@ -1,12 +1,12 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import type { GeneratorOptions } from '@prisma/generator-helper';
 import { generatorHandler } from '@prisma/generator-helper';
 import { parseEnvValue } from '@prisma/internals';
-import { run } from './generator';
-import type { GeneratorOptions } from '@prisma/generator-helper';
-import type { WriteableFileSpecs, NamingStyle } from './generator/types';
-import { MergeContent } from './merge-content';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { format } from 'prettier';
+import { SmartMergeContent } from './commands/smart-merge-content';
+import { run } from './generators';
+import type { NamingStyle, WriteableFileSpecs } from './generators/types';
 
 export const stringToBoolean = (input: string, defaultValue = false) => {
   if (input === 'true') {
@@ -31,6 +31,7 @@ export const generate = (options: GeneratorOptions) => {
     entityPrefix = '',
     entitySuffix = '',
     fileNamingStyle = 'camel',
+    decoratorConfigPath,
   } = options.generator.config;
 
   const exportRelationModifierClasses = stringToBoolean(
@@ -99,7 +100,7 @@ export const generate = (options: GeneratorOptions) => {
     });
   }
 
-  const mergeContent = new MergeContent();
+  const mergeContent = new SmartMergeContent();
 
   return Promise.all(
     results

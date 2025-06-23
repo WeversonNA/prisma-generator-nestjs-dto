@@ -16,6 +16,7 @@ generator nestjsDto {
   entitySuffix                    = ""
   addExposePropertyDecorator      = "true"
   fileNamingStyle                 = "camel"
+  decoratorConfigPath             = "./src/example-decorator-config.json"
 }
 
 model Product {

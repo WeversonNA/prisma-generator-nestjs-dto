@@ -1,4 +1,4 @@
-import { mapDMMFToParsedField } from './helpers';
+import { Helpers } from './helpers';
 import type { DMMF } from '@prisma/generator-helper';
 import { ParsedField } from './types';
 
@@ -20,12 +20,12 @@ describe('map DMMF.Field to ParsedField', () => {
   const overrides = { name: 'b' };
 
   it('overrides "name" property', () => {
-    const parsedField = mapDMMFToParsedField(field, overrides);
+    const parsedField = Helpers.mapDMMFToParsedField(field, overrides);
     expect(parsedField.name).toBe(overrides.name);
   });
 
   test('preserves all other properties from "field"', () => {
-    const parsedField = mapDMMFToParsedField(field, overrides);
+    const parsedField = Helpers.mapDMMFToParsedField(field, overrides);
     Object.keys(field)
       .filter((key) => key !== 'name')
       .forEach((key) => {
