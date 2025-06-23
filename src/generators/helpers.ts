@@ -8,6 +8,7 @@ import {
 import type { DMMF } from '@prisma/generator-helper';
 import { TemplateHelpers } from './template-helpers';
 import type { ImportStatementParams, Model, ParsedField } from './types';
+import { DecoratorStrategy } from './decorator-strategy';
 
 export interface RelationInputResult {
   type: string;
@@ -30,6 +31,7 @@ interface GenerateRelationInputParam {
 }
 
 export class Helpers {
+  constructor(private readonly decoratorStrategy: DecoratorStrategy) {}
   static uniq<T>(input: T[]): T[] {
     return Array.from(new Set(input));
   }
@@ -128,7 +130,7 @@ export class Helpers {
     return result || '.';
   }
 
-  static generateRelationInput(
+  generateRelationInput(
     params: GenerateRelationInputParam,
   ): RelationInputResult {
     const {
@@ -266,6 +268,7 @@ export class Helpers {
       },
       {} as Record<string, ImportStatementParams>,
     );
+
     return Object.values(map);
   }
 }

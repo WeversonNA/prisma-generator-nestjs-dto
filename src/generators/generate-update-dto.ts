@@ -16,7 +16,7 @@ export const generateUpdateDto = ({
   templateHelpers: t,
   addExposePropertyDecorator,
 }: GenerateUpdateDtoParam) => `
-// ${TemplateHelpers.importStatements(imports)}
+${TemplateHelpers.importStatements(imports)}
 
 ${TemplateHelpers.each(
   extraClasses,

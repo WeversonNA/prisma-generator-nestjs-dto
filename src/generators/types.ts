@@ -52,7 +52,11 @@ export interface DtoParams {
   imports: ImportStatementParams[];
 }
 
-export type ConnectDtoParams = Omit<DtoParams, 'imports'>;
+export interface ConnectDtoParams {
+  model: DMMF.Model;
+  fields: ParsedField[];
+  imports: ImportStatementParams[];
+}
 
 export interface CreateDtoParams extends DtoParams {
   extraClasses: string[];

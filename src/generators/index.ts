@@ -6,11 +6,8 @@ import { computeModelParams } from './compute-model-params';
 import { isAnnotatedWith } from './field-classifiers';
 import { generateConnectDto } from './generate-connect-dto';
 import { generateCreateDto } from './generate-create-dto';
-import { generateEntity, GenerateEntityParam } from './generate-entity';
-import {
-  generateUpdateDto,
-  GenerateUpdateDtoParam,
-} from './generate-update-dto';
+import { generateEntity } from './generate-entity';
+import { generateUpdateDto } from './generate-update-dto';
 import { TemplateHelpers } from './template-helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
@@ -104,6 +101,7 @@ export class NestJsDtoGenerator {
         fileName: this.templateHelpers.connectDtoFilename.bind(
           this.templateHelpers,
         ),
+        extra: { exportRelationModifierClasses, addExposePropertyDecorator },
       },
       {
         key: 'create',

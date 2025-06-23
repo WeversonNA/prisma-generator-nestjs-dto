@@ -1,7 +1,7 @@
 {
   "name": "@weverson_na/prisma-generator-nestjs-dto",
-  "description": "Custom fork: Generates DTO and Entity classes from Prisma Schema for NestJS",
-  "version": "1.5.23",
+  "description": "Enhanced Prisma Generator: Creates DTO and Entity classes with Smart Merge and Modular Architecture for NestJS",
+  "version": "2.0.0",
   "license": "Apache-2.0",
   "author": {
     "name": "Weverson Nascimento Almeida",
@@ -13,7 +13,11 @@
     "generator",
     "nestjs",
     "dto",
-    "typescript"
+    "typescript",
+    "smart-merge",
+    "modular",
+    "clean-architecture",
+    "code-generation"
   ],
   "scripts": {
     "prebuild": "npm run cleanup:generated",
