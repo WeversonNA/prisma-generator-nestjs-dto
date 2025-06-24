@@ -12,19 +12,23 @@ import type {
   ParsedField,
 } from '../types';
 import { FieldProcessingConfig } from './shared';
-import { DecoratorStrategy } from '../decorator-strategy';
+import { DecoratorStrategy } from '../decorators/decorator-strategy';
 
 interface ComputeEntityParamsParam {
   model: Model;
   allModels: Model[];
   templateHelpers: TemplateHelpers;
+  customDecoratorConfigsPath?: string;
 }
 
 export class EntityParamsComputer extends BaseModelParamsComputer {
   private fieldConfig: EntityFieldConfig;
 
-  constructor(templateHelpers: TemplateHelpers) {
-    super(templateHelpers);
+  constructor(
+    templateHelpers: TemplateHelpers,
+    protected customDecoratorConfigsPath?: string,
+  ) {
+    super(templateHelpers, customDecoratorConfigsPath);
     this.fieldConfig = new EntityFieldConfig(templateHelpers);
   }
 
@@ -35,8 +39,7 @@ export class EntityParamsComputer extends BaseModelParamsComputer {
   computeParams(
     model: Model,
     allModels: Model[],
-    addExposePropertyDecorator?: boolean,
-    customDecoratorConfigsPath?: string,
+    _addExposePropertyDecorator?: boolean,
   ): EntityParams {
     const imports: ImportStatementParams[] = [];
     const apiExtraModels: string[] = [];
@@ -68,7 +71,7 @@ export class EntityParamsComputer extends BaseModelParamsComputer {
 
       const decoratorImports = this.processEntityDecorators(
         field,
-        customDecoratorConfigsPath,
+        this.customDecoratorConfigsPath,
       );
       imports.push(...decoratorImports);
 
@@ -177,7 +180,11 @@ export const computeEntityParams = ({
   model,
   allModels,
   templateHelpers,
+  customDecoratorConfigsPath,
 }: ComputeEntityParamsParam): EntityParams => {
-  const computer = new EntityParamsComputer(templateHelpers);
+  const computer = new EntityParamsComputer(
+    templateHelpers,
+    customDecoratorConfigsPath,
+  );
   return computer.computeParams(model, allModels);
 };

@@ -32,16 +32,21 @@ export class PrismaTypeConverter implements TypeConverter {
     return PrismaTypeConverter.PrismaScalarToTypeScript[scalar];
   }
 
-  fieldType(field: ParsedField, toInputType = false): string {
+  fieldType(
+    field: ParsedField,
+    toInputType = false,
+    entityPrefix = '',
+    entitySuffix = '',
+  ): string {
     switch (field.kind) {
       case 'scalar':
         return this.scalarToTS(field.type, toInputType);
       case 'enum':
       case 'relation-input':
-        return field.type;
+        return `${entityPrefix}${field.type}${entitySuffix}`;
       default:
         // For relation fields, we need entity name + optional array notation
-        return `${field.type}${field.isList ? '[]' : ''}`;
+        return `${entityPrefix}${field.type}${entitySuffix}${field.isList ? '[]' : ''}`;
     }
   }
 }

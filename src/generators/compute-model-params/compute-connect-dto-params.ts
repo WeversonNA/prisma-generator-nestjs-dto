@@ -12,13 +12,17 @@ interface ComputeConnectDtoParamsParam {
   model: DMMF.Model;
   templateHelpers?: TemplateHelpers;
   addExposePropertyDecorator: boolean;
+  customDecoratorConfigsPath?: string;
 }
 
 export class ConnectDtoParamsComputer extends BaseModelParamsComputer {
   private fieldConfig: ConnectDtoFieldConfig;
 
-  constructor(templateHelpers?: TemplateHelpers) {
-    super(templateHelpers as TemplateHelpers);
+  constructor(
+    protected readonly customDecoratorConfigsPath?: string,
+    templateHelpers?: TemplateHelpers,
+  ) {
+    super(templateHelpers as TemplateHelpers, customDecoratorConfigsPath);
     this.fieldConfig = new ConnectDtoFieldConfig(
       templateHelpers as TemplateHelpers,
     );
@@ -32,7 +36,6 @@ export class ConnectDtoParamsComputer extends BaseModelParamsComputer {
     model: DMMF.Model,
     _allModels?: Model[],
     addExposePropertyDecorator?: boolean,
-    customDecoratorConfigsPath?: string,
   ): ConnectDtoParams {
     const idFields = model.fields.filter((field) => isId(field));
     const isUniqueFields = model.fields.filter((field) => isUnique(field));
@@ -50,7 +53,6 @@ export class ConnectDtoParamsComputer extends BaseModelParamsComputer {
         model as Model,
         [],
         addExposePropertyDecorator,
-        customDecoratorConfigsPath,
       );
 
       imports = this.finalizeImports(
@@ -80,7 +82,11 @@ export const computeConnectDtoParams = ({
   model,
   templateHelpers,
   addExposePropertyDecorator,
+  customDecoratorConfigsPath,
 }: ComputeConnectDtoParamsParam): ConnectDtoParams => {
-  const computer = new ConnectDtoParamsComputer(templateHelpers);
+  const computer = new ConnectDtoParamsComputer(
+    customDecoratorConfigsPath,
+    templateHelpers,
+  );
   return computer.computeParams(model, [], addExposePropertyDecorator);
 };

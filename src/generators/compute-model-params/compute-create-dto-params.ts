@@ -9,13 +9,17 @@ interface ComputeCreateDtoParamsParam {
   allModels: Model[];
   templateHelpers: TemplateHelpers;
   addExposePropertyDecorator: boolean;
+  customDecoratorConfigsPath?: string;
 }
 
 export class CreateDtoParamsComputer extends BaseModelParamsComputer {
   private fieldConfig: CreateDtoFieldConfig;
 
-  constructor(templateHelpers: TemplateHelpers) {
-    super(templateHelpers);
+  constructor(
+    templateHelpers: TemplateHelpers,
+    protected customDecoratorConfigsPath?: string,
+  ) {
+    super(templateHelpers, customDecoratorConfigsPath);
     this.fieldConfig = new CreateDtoFieldConfig(templateHelpers);
   }
 
@@ -27,7 +31,6 @@ export class CreateDtoParamsComputer extends BaseModelParamsComputer {
     model: Model,
     allModels: Model[],
     addExposePropertyDecorator: boolean,
-    customDecoratorConfigsPath?: string,
   ): CreateDtoParams {
     const fieldsWithoutIds = model.fields.filter((field) => !field.isId);
 
@@ -40,7 +43,6 @@ export class CreateDtoParamsComputer extends BaseModelParamsComputer {
       modelWithoutIds,
       allModels,
       addExposePropertyDecorator,
-      customDecoratorConfigsPath,
     );
 
     const imports = this.finalizeImports(
@@ -65,7 +67,11 @@ export const computeCreateDtoParams = ({
   allModels,
   templateHelpers,
   addExposePropertyDecorator,
+  customDecoratorConfigsPath,
 }: ComputeCreateDtoParamsParam): CreateDtoParams => {
-  const computer = new CreateDtoParamsComputer(templateHelpers);
+  const computer = new CreateDtoParamsComputer(
+    templateHelpers,
+    customDecoratorConfigsPath,
+  );
   return computer.computeParams(model, allModels, addExposePropertyDecorator);
 };

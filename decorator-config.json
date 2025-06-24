@@ -1,0 +1,6 @@
+[
+  {
+    "importPath": "@angular/core",
+    "names": ["Component", "Injectable", "Pipe"]
+  }
+]

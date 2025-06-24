@@ -26,7 +26,7 @@ ${TemplateHelpers.each(
   '\n',
 )}
 
-${TemplateHelpers.when(apiExtraModels.length, t.apiExtraModels(apiExtraModels))}
+${TemplateHelpers.when(apiExtraModels.length, t.apiExtraModels(apiExtraModels, true))}
 export class ${t.createDtoName(model.name)} {
   ${t.fieldsToDtoProps(fields, true, false, addExposePropertyDecorator)}
 }

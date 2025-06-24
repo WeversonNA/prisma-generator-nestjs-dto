@@ -2,7 +2,7 @@ import type { DMMF } from '@prisma/generator-helper';
 import type { TemplateHelpers } from '../../template-helpers';
 import type { Model, ParsedField, ImportStatementParams } from '../../types';
 import { Helpers } from '../../helpers';
-import { DecoratorStrategy } from '../../decorator-strategy';
+import { DecoratorStrategy } from '../../decorators/decorator-strategy';
 import { FieldProcessingConfig } from '../interfaces/field-processing-config.interface';
 import { FieldProcessingResult } from '../interfaces/field-processing-result.interface';
 import { isAnnotatedWith, isAnnotatedWithOneOf } from '../../field-classifiers';
@@ -10,8 +10,13 @@ import { isAnnotatedWith, isAnnotatedWithOneOf } from '../../field-classifiers';
 export class FieldProcessor {
   private readonly helpers: Helpers;
 
-  constructor(private readonly templateHelpers: TemplateHelpers) {
-    this.helpers = new Helpers(new DecoratorStrategy());
+  constructor(
+    private readonly templateHelpers: TemplateHelpers,
+    protected readonly customDecoratorConfigsPath?: string,
+  ) {
+    this.helpers = new Helpers(
+      new DecoratorStrategy(customDecoratorConfigsPath),
+    );
   }
 
   private hasImport(
@@ -45,7 +50,6 @@ export class FieldProcessor {
     allModels: Model[],
     config: FieldProcessingConfig,
     addExposePropertyDecorator: boolean,
-    customDecoratorConfigsPath?: string,
   ): FieldProcessingResult {
     let hasEnum = false;
     const imports: ImportStatementParams[] = [];
@@ -99,8 +103,9 @@ export class FieldProcessor {
 
       const decoratorImports = this.processCustomDecorators(
         field,
-        customDecoratorConfigsPath,
+        this.customDecoratorConfigsPath,
       );
+
       imports.push(...decoratorImports);
 
       if (addExposePropertyDecorator && !this.hasImport(imports)) {
@@ -190,11 +195,13 @@ export class FieldProcessor {
   ): ImportStatementParams[] {
     const decoratorStrategy = new DecoratorStrategy(customDecoratorConfigsPath);
 
+    const validDecorators = decoratorStrategy.getValidDecoratorAndImportsByDoc(
+      field?.documentation,
+    );
+
     const decorators =
       decoratorStrategy.formatValidDecoratorResultToFromDestruct(
-        decoratorStrategy.getValidDecoratorAndImportsByDoc(
-          field?.documentation,
-        ),
+        validDecorators,
       );
 
     return decorators;

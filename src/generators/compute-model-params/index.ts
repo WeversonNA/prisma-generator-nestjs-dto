@@ -11,6 +11,7 @@ interface ComputeModelParamsParam {
   allModels: Model[];
   templateHelpers: TemplateHelpers;
   addExposePropertyDecorator: boolean;
+  customDecoratorConfigsPath?: string;
 }
 
 export const computeModelParams = ({
@@ -18,16 +19,27 @@ export const computeModelParams = ({
   allModels,
   templateHelpers,
   addExposePropertyDecorator,
+  customDecoratorConfigsPath,
 }: ComputeModelParamsParam): ModelParams => {
-  const createComputer = new CreateDtoParamsComputer(templateHelpers);
-  const updateComputer = new UpdateDtoParamsComputer(templateHelpers);
-  const entityComputer = new EntityParamsComputer(templateHelpers);
+  const createComputer = new CreateDtoParamsComputer(
+    templateHelpers,
+    customDecoratorConfigsPath,
+  );
+  const updateComputer = new UpdateDtoParamsComputer(
+    templateHelpers,
+    customDecoratorConfigsPath,
+  );
+  const entityComputer = new EntityParamsComputer(
+    templateHelpers,
+    customDecoratorConfigsPath,
+  );
 
   return {
     connect: computeConnectDtoParams({
       model,
       templateHelpers,
       addExposePropertyDecorator,
+      customDecoratorConfigsPath,
     }),
 
     create: createComputer.computeParams(
