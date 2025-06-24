@@ -21,8 +21,10 @@ type SpecConfig = {
   fn: (args: any) => string;
   fileName: (name: string, withExt?: boolean) => string;
   extra?: {
-    exportRelationModifierClasses: boolean;
-    addExposePropertyDecorator: boolean;
+    entityPrefix?: string;
+    entitySuffix?: string;
+    exportRelationModifierClasses?: boolean;
+    addExposePropertyDecorator?: boolean;
   };
 };
 
@@ -39,6 +41,7 @@ export interface RunParam {
   entitySuffix: string;
   fileNamingStyle: NamingStyle;
   addExposePropertyDecorator: boolean;
+  decoratorConfigPath?: string;
 }
 
 export class NestJsDtoGenerator {
@@ -91,6 +94,7 @@ export class NestJsDtoGenerator {
       allModels,
       templateHelpers: this.templateHelpers,
       addExposePropertyDecorator,
+      customDecoratorConfigsPath: this.params.decoratorConfigPath,
     });
 
     const configs: SpecConfig[] = [
@@ -128,6 +132,10 @@ export class NestJsDtoGenerator {
         fileName: this.templateHelpers.entityFilename.bind(
           this.templateHelpers,
         ),
+        extra: {
+          entityPrefix: this.params.entityPrefix,
+          entitySuffix: this.params.entitySuffix,
+        },
       },
     ];
 

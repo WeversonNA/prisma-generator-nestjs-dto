@@ -1,451 +1,364 @@
 # Prisma Generator NestJS DTO
 
-**🎉 Enhanced Fork with Advanced Features**
-
-[![Smart Merge](https://img.shields.io/badge/Smart%20Merge-Enabled-brightgreen)](README.md#smart-merge-system)
-[![Modular Architecture](https://img.shields.io/badge/Architecture-Modular-blue)](README.md#architecture-improvements)
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-A+-green)](README.md#architecture-improvements)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/github/license/vegardit/prisma-generator-nestjs-dto.svg?label=license)](#license)
 
-This is an enhanced and refactored version of the original `@vegardit/prisma-generator-nestjs-dto` with significant improvements in code organization, maintainability, and new smart merge capabilities.
+Generates ConnectDTO, CreateDTO, UpdateDTO, and Entity classes from Prisma schema with smart merge capabilities to preserve custom fields and decorators.
 
+## Table of Contents
 
 1. [What is it?](#what-is-it)
-1. [What's New in This Fork?](#whats-new-in-this-fork)
-1. [Usage](#usage)
-1. [Annotations](#annotations)
-1. [Smart Merge System](#smart-merge-system)
-1. [Architecture Improvements](#architecture-improvements)
-1. [Example](#example)
-1. [Principles](#principles)
-1. [License](#license)
-1. [Contributing](#contributing)
-1. [Acknowledgments](#acknowledgments)
+2. [Installation & Usage](#installation--usage)  
+3. [Configuration](#configuration)
+4. [Annotations](#annotations)
+5. [Smart Merge System](#smart-merge-system)
+6. [Examples](#examples)
+7. [License](#license)
 
-## <a name="what-is-it"></a>What is it?
+## What is it?
 
-Generates `ConnectDTO`, `CreateDTO`, `UpdateDTO`, and `Entity` classes for models in your Prisma Schema. This is useful if you want to leverage [OpenAPI](https://docs.nestjs.com/openapi/introduction) in your [NestJS](https://nestjs.com/) application - but also helps with GraphQL resources as well). NestJS Swagger requires input parameters in [controllers to be described through classes](https://docs.nestjs.com/openapi/types-and-parameters) because it leverages TypeScript's emitted metadata and `Reflection` to generate models/components for the OpenAPI spec. It does the same for response models/components on your controller methods.
+Generates `ConnectDTO`, `CreateDTO`, `UpdateDTO`, and `Entity` classes for models in your Prisma Schema. This is useful for [OpenAPI](https://docs.nestjs.com/openapi/introduction) in [NestJS](https://nestjs.com/) applications and GraphQL resources. NestJS Swagger requires input parameters in controllers to be described through classes because it leverages TypeScript's emitted metadata and Reflection to generate OpenAPI spec components.
 
-These classes can also be used with the built-in [ValidationPipe](https://docs.nestjs.com/techniques/validation#using-the-built-in-validationpipe) and [Serialization](https://docs.nestjs.com/techniques/serialization).
+These classes can also be used with NestJS [ValidationPipe](https://docs.nestjs.com/techniques/validation#using-the-built-in-validationpipe) and [Serialization](https://docs.nestjs.com/techniques/serialization).
 
-## <a name="usage"></a>Usage?
+### What's New in v2.0.2?
+
+🎉 **Major Release with Breaking Improvements**
+
+- **Smart Merge System**: Automatically preserves custom fields and decorators during regeneration
+- **Custom Decorator Config**: Define and use custom decorators with proper import mapping
+- **Modular Architecture**: Complete refactoring for better maintainability and extensibility
+- **Enhanced Performance**: Optimized generation process and import management
+- **Better Type Safety**: Improved TypeScript interfaces and type checking
+- **Bug Fixes**: Resolved issues with decorator config propagation and field processing
+
+### Key Features
+
+- **Smart Merge System**: Preserves custom fields and decorators during regeneration
+- **Full Annotation Support**: Use Prisma comments to control DTO generation
+- **Flexible Configuration**: Customize naming, output structure, and behavior
+- **Type Safety**: Full TypeScript support with proper type inference
+- **NestJS Integration**: Works seamlessly with Swagger, validation, and serialization
+
+## Installation & Usage
 
 ```sh
 npm install --save-dev @weverson_na/prisma-generator-nestjs-dto
 ```
 
+Add the generator to your `schema.prisma`:
+
+```prisma
+generator nestjsDto {
+  provider = "prisma-generator-nestjs-dto"
+  output   = "../src/generated/nestjs-dto"
+}
+```
+
+Then run:
+
+```sh
+npx prisma generate
+```
+
+## Configuration
+
+All parameters are optional:
+
+- **`output`**: (default: `"../src/generated/nestjs-dto"`) - Output path relative to your `schema.prisma` file
+- **`outputToNestJsResourceStructure`**: (default: `"false"`) - Organize DTOs in NestJS CRUD generator structure
+- **`exportRelationModifierClasses`**: (default: `"true"`) - Export extra classes for relationship operations
+- **`reExport`**: (default: `"false"`) - Create index.ts files for every folder
+- **`createDtoPrefix`**: (default: `"Create"`) - Prefix for CreateDTO classes
+- **`updateDtoPrefix`**: (default: `"Update"`) - Prefix for UpdateDTO classes  
+- **`dtoSuffix`**: (default: `"Dto"`) - Suffix for DTO classes
+- **`entityPrefix`**: (default: `""`) - Prefix for Entity classes
+- **`entitySuffix`**: (default: `""`) - Suffix for Entity classes
+- **`fileNamingStyle`**: (default: `"camel"`) - File naming style: `"camel"`, `"pascal"`, `"kebab"`, or `"snake"`
+- **`classValidation`**: (default: `"false"`) - Add class-validator decorators
+- **`addExposePropertyDecorator`**: (default: `"false"`) - Add `@Expose()` decorators for serialization
+
+Example with all options:
+
 ```prisma
 generator nestjsDto {
   provider                        = "prisma-generator-nestjs-dto"
   output                          = "../src/generated/nestjs-dto"
-  outputToNestJsResourceStructure = "false"
+  outputToNestJsResourceStructure = "true"
   exportRelationModifierClasses   = "true"
-  reExport                        = "false"
+  reExport                        = "true"
   createDtoPrefix                 = "Create"
   updateDtoPrefix                 = "Update"
   dtoSuffix                       = "Dto"
   entityPrefix                    = ""
-  entitySuffix                    = ""
-  fileNamingStyle                 = "camel"
+  entitySuffix                    = "Entity"
+  fileNamingStyle                 = "kebab"
+  classValidation                 = "true"
+  addExposePropertyDecorator      = "true"
 }
 ```
 
-### Parameters
+## Annotations
 
-All parameters are optional.
-
-- [`output`]: (default: `"../src/generated/nestjs-dto"`) - output path relative to your `schema.prisma` file
-- [`outputToNestJsResourceStructure`]: (default: `"false"`) - writes `dto`s and `entities` to subfolders aligned with [NestJS CRUD generator](https://docs.nestjs.com/recipes/crud-generator). Resource module name is derived from lower-cased model name in `schema.prisma`
-- [`exportRelationModifierClasses`]: (default: `"true"`) - Should extra classes generated for relationship field operations on DTOs be exported?
-- [`reExport`]: (default: `false`) - Should an index.ts be created for every folder?
-- [`createDtoPrefix`]: (default: `"Create"`) - phrase to prefix every `CreateDTO` class with
-- [`updateDtoPrefix`]: (default: `"Update"`) - phrase to prefix every `UpdateDTO` class with
-- [`dtoSuffix`]: (default: `"Dto"`) - phrase to suffix every `CreateDTO` and `UpdateDTO` class with
-- [`entityPrefix`]: (default: `""`) - phrase to prefix every `Entity` class with
-- [`entitySuffix`]: (default: `""`) - phrase to suffix every `Entity` class with
-- [`fileNamingStyle`]: (default: `"camel"`) - how to name generated files. Valid choices are `"camel"`, `"pascal"`, `"kebab"` and `"snake"`.
-- [`addExposePropertyDecorator`]: (default: `"false"`) - When set to `"true"`, adds `@Expose()` decorators (from `class-transformer`) to all generated DTO properties, enabling fine-grained control over serialization.
-
-### New Features
-
-- **Smart Merge System**: Automatically preserves custom fields and decorators in generated DTOs during regeneration
-- **Modular Architecture**: Clean, maintainable code structure with 90% less duplication
-- **Enhanced Import Management**: Intelligent import optimization and deduplication
-- **Better Error Handling**: More informative error messages and robust fallback strategies
-
-## <a name="annotations"></a>Annotations
-
-Annotations provide additional information to help this generator understand your intentions. They are applied as [tripple slash comments](https://www.prisma.io/docs/concepts/components/prisma-schema#comments) to a field node in your Prisma Schema. You can apply multiple annotations to the same field.
+Use triple-slash comments in your Prisma schema to control DTO generation:
 
 ```prisma
 model Post {
   /// @IsDate()
-  /// @DtoCreateOptional
+  /// @DtoCreateOptional  
   /// @DtoUpdateHidden
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  
+  /// @DtoReadOnly
+  id String @id @default(uuid())
+  
+  /// @ApiProperty({ description: "Post title", minLength: 1, maxLength: 100 })
+  /// @IsNotEmpty()
+  /// @MaxLength(100)
+  title String
 }
 ```
 
-- @DtoReadOnly - omits field in `CreateDTO` and `UpdateDTO`
-- @DtoEntityHidden - omits field in `Entity`
-- @DtoCreateOptional - adds field **optionally** to `CreateDTO` - useful for fields that would otherwise be omitted (e.g. `@id`, `@updatedAt`)
-- @DtoUpdateOptional- adds field **optionally** to `UpdateDTO` - useful for fields that would otherwise be omitted (e.g. `@id`, `@updatedAt`)
-- @DtoRelationRequired - marks relation **required** in `Entity` although it's optional in PrismaSchema - useful when you don't want (SQL) `ON DELETE CASCADE` behavior - but your logical data schema sees this relation as required
-  (**Note**: becomes obsolete once [referentialActions](https://github.com/prisma/prisma/issues/7816) are released and stable)
-- @DtoRelationCanCreateOnCreate - adds [create](https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#create-a-related-record) option on a relation field in the generated `CreateDTO` - useful when you want to allow to create related model instances
-- @DtoRelationCanConnectOnCreate - adds [connect](https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#connect-an-existing-record) option on a relation field in the generated `CreateDTO` - useful when you want/need to connect to an existing related instance
-- @DtoRelationCanCreateOnUpdate - adds [create](https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#create-a-related-record) option on a relation field in the generated `UpdateDTO` - useful when you want to allow to create related model instances
-- @DtoRelationCanConnectOnUpdate - adds [connect](https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#connect-an-existing-record) option on a relation field in the generated `UpdateDTO` - useful when you want/need to connect to an existing related instance
-- @ApiProperty is implemented to receive the complete Swagger ApiProperty decorator configuration. Whatever options you pass into @ApiProperty will be forwarded directly to the generated DTO class, ensuring that the DTO fields fully reflect the intended Swagger specifications. This approach allows you to leverage the full power and flexibility of the @ApiProperty decorator without any intermediary modifications.
-- Any class-validator decorator — you can write e.g. /// @IsEmail(), /// @MinLength(3), etc. in your schema and it will be forwarded as a decorator on the generated DTO property
+### Available Annotations
 
-## <a name="example"></a>Example
+**Field Visibility:**
+- `@DtoReadOnly` - Omits field from CreateDTO and UpdateDTO
+- `@DtoEntityHidden` - Omits field from Entity  
+- `@DtoCreateOptional` - Makes field optional in CreateDTO
+- `@DtoUpdateOptional` - Makes field optional in UpdateDTO
 
-<details>
-  <summary>Prisma Schema</summary>
+**Relations:**
+- `@DtoRelationRequired` - Marks relation as required in Entity
+- `@DtoRelationCanCreateOnCreate` - Allow creating related records in CreateDTO
+- `@DtoRelationCanConnectOnCreate` - Allow connecting to existing records in CreateDTO
+- `@DtoRelationCanCreateOnUpdate` - Allow creating related records in UpdateDTO  
+- `@DtoRelationCanConnectOnUpdate` - Allow connecting to existing records in UpdateDTO
 
-  ```prisma
+**Swagger/OpenAPI:**
+- `@ApiProperty` - Pass options directly to Swagger decorator
 
+**Validation:**
+- Any class-validator decorator (e.g., `@IsEmail()`, `@MinLength(3)`, `@IsOptional()`)
+
+## Smart Merge System
+
+The Smart Merge System preserves your custom fields and decorators when regenerating DTOs. This allows you to:
+
+1. **Add custom fields** to generated DTOs
+2. **Add custom decorators** to any field  
+3. **Modify generated properties** without losing changes
+4. **Keep custom imports** and configuration
+
+### How it works
+
+Generated fields are marked with `// @generated from prisma schema`:
+
+```typescript
+export class CreateUserDto {
+  // @generated from prisma schema
+  @ApiProperty()
+  name: string;
+
+  // @generated from prisma schema  
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+
+  // Custom field - preserved during regeneration
+  @ApiProperty({ description: 'Custom validation field' })
+  @IsOptional()
+  customField?: string;
+}
+```
+
+### Custom Decorator Configuration
+
+Create a `decorator-config.json` file to define custom decorators:
+
+```json
+[
+  {
+    "importPath": "@example/core",
+    "names": ["Component", "Injectable", "Pipe"]
+  }
+]
+```
+
+Then reference it in your schema:
+
+```prisma
 generator nestjsDto {
-provider = "prisma-generator-nestjs-dto"
-output = "../src"
-outputToNestJsResourceStructure = "true"
+  provider = "prisma-generator-nestjs-dto"
+  decoratorConfigPath = "./decorator-config.json"
+}
+```
+
+### Troubleshooting
+
+**Q: My custom decorators are not being imported correctly**  
+A: Make sure you have created a `decorator-config.json` file and referenced it in your Prisma schema with `decoratorConfigPath`. The decorators must be defined in the config file to be recognized.
+
+**Q: Custom fields are not being preserved**  
+A: Ensure your custom fields don't have the comment `// @generated from prisma schema`. Only fields with this marker are replaced during regeneration.
+
+**Q: Generation fails with import errors**  
+A: Check that all custom decorators in your `decorator-config.json` point to valid packages. Install missing dependencies with `npm install`.
+
+## Examples
+
+### Basic Prisma Schema
+
+```prisma
+generator nestjsDto {
+  provider = "prisma-generator-nestjs-dto"
+  output = "../src/generated"
 }
 
-model Question {
-id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-/// @DtoReadOnly
-createdAt DateTime @default(now())
-/// @DtoRelationRequired
-createdBy User? @relation("CreatedQuestions", fields: [createdById], references: [id])
-createdById String? @db.Uuid
-updatedAt DateTime @updatedAt
-/// @DtoRelationRequired
-updatedBy User? @relation("UpdatedQuestions", fields: [updatedById], references: [id])
-updatedById String? @db.Uuid
-
-    /// @DtoRelationRequired
-    /// @DtoRelationCanConnectOnCreate
-    category   Category? @relation(fields: [categoryId], references: [id])
-    categoryId String?   @db.Uuid
-
-    /// @DtoCreateOptional
-    /// @DtoRelationCanCreateOnCreate
-    /// @DtoRelationCanConnectOnCreate
-    /// @DtoRelationCanCreateOnUpdate
-    /// @DtoRelationCanConnectOnUpdate
-    tags Tag[]
-
-    title     String
-    content   String
-    responses Response[]
-
+model User {
+  /// @DtoReadOnly
+  id        String   @id @default(uuid())
+  
+  /// @ApiProperty({ description: "User's email address" })
+  /// @IsEmail()
+  email     String   @unique
+  
+  /// @ApiProperty({ minLength: 2, maxLength: 50 })
+  /// @IsNotEmpty()
+  name      String
+  
+  /// @DtoCreateOptional
+  /// @DtoUpdateOptional
+  createdAt DateTime @default(now())
+  
+  posts     Post[]
 }
 
-````
-
-</details>
-
-<details>
-<summary>Generated results</summary>
-
-```ts
-// src/question/dto/connect-question.dto.ts
-export class ConnectQuestionDto {
-  id: string;
+model Post {
+  id       String @id @default(uuid())
+  
+  /// @ApiProperty({ minLength: 1, maxLength: 100 })
+  title    String
+  
+  content  String
+  
+  /// @DtoRelationRequired
+  /// @DtoRelationCanConnectOnCreate
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
 }
-````
+```
 
-```ts
-// src/question/dto/create-question.dto.ts
-import { ApiExtraModels } from '@nestjs/swagger';
-import { ConnectCategoryDto } from '../../category/dto/connect-category.dto';
-import { CreateTagDto } from '../../tag/dto/create-tag.dto';
-import { ConnectTagDto } from '../../tag/dto/connect-tag.dto';
+### Generated Output
 
-export class CreateQuestionCategoryRelationInputDto {
-  connect: ConnectCategoryDto;
+**CreateUserDto:**
+```typescript
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty } from 'class-validator';
+
+export class CreateUserDto {
+  // @generated from prisma schema
+  @ApiProperty({ description: "User's email address" })
+  @IsEmail()
+  email: string;
+
+  // @generated from prisma schema
+  @ApiProperty({ minLength: 2, maxLength: 50 })
+  @IsNotEmpty()
+  name: string;
+
+  // @generated from prisma schema
+  createdAt?: Date;
 }
-export class CreateQuestionTagsRelationInputDto {
-  create?: CreateTagDto[];
-  connect?: ConnectTagDto[];
+```
+
+**CreatePostDto:**
+```typescript
+import { ApiProperty } from '@nestjs/swagger';
+import { ConnectUserDto } from '../user/dto/connect-user.dto';
+
+export class CreatePostRelationInputDto {
+  connect: ConnectUserDto;
 }
 
-@ApiExtraModels(
-  ConnectCategoryDto,
-  CreateQuestionCategoryRelationInputDto,
-  CreateTagDto,
-  ConnectTagDto,
-  CreateQuestionTagsRelationInputDto,
-)
-export class CreateQuestionDto {
-  category: CreateQuestionCategoryRelationInputDto;
-  tags?: CreateQuestionTagsRelationInputDto;
+export class CreatePostDto {
+  // @generated from prisma schema
+  @ApiProperty({ minLength: 1, maxLength: 100 })
   title: string;
+
+  // @generated from prisma schema
   content: string;
+
+  // @generated from prisma schema
+  author: CreatePostRelationInputDto;
 }
 ```
 
-```ts
-// src/question/dto/update-question.dto.ts
-import { ApiExtraModels } from '@nestjs/swagger';
-import { CreateTagDto } from '../../tag/dto/create-tag.dto';
-import { ConnectTagDto } from '../../tag/dto/connect-tag.dto';
+### Smart Merge System Example
 
-export class UpdateQuestionTagsRelationInputDto {
-  create?: CreateTagDto[];
-  connect?: ConnectTagDto[];
-}
-
-@ApiExtraModels(CreateTagDto, ConnectTagDto, UpdateQuestionTagsRelationInputDto)
-export class UpdateQuestionDto {
-  tags?: UpdateQuestionTagsRelationInputDto;
-  title?: string;
-  content?: string;
-}
-```
-
-```ts
-// src/question/entities/question.entity.ts
-import { User } from '../../user/entities/user.entity';
-import { Category } from '../../category/entities/category.entity';
-import { Tag } from '../../tag/entities/tag.entity';
-import { Response } from '../../response/entities/response.entity';
-
-export class Question {
-  id: string;
-  createdAt: Date;
-  createdBy?: User;
-  createdById: string;
-  updatedAt: Date;
-  updatedBy?: User;
-  updatedById: string;
-  category?: Category;
-  categoryId: string;
-  tags?: Tag[];
-  title: string;
-  content: string;
-  responses?: Response[];
-}
-```
-
-</details>
-
-## <a name="principles"></a>Principles
-
-Generally we read field properties from the `DMMF.Field` information provided by `@prisma/generator-helper`. Since a few scenarios don't become quite clear from that, we also check for additional [annotations](#annotations) (or `decorators`) in a field's `documentation` (that is anything provided as a [tripple slash comments](https://www.prisma.io/docs/concepts/components/prisma-schema#comments) for that field in your `prisma.schema`).
-
-Initially, we wanted `DTO` classes to `implement Prisma.<ModelName><(Create|Update)>Input` but that turned out to conflict with **required** relation fields.
-
-### ConnectDTO
-
-This kind of DTO represents the structure of input-data to expect from 'outside' (e.g. REST API consumer) when attempting to `connect` to a model through a relation field.
-
-A `Model`s `ConnectDTO` class is composed from a unique'd list of `isId` and `isUnique` scalar fields. If the `ConnectDTO` class has exactly one property, the property is marked as required. If there are more than one properties, all properties are optional (since setting a single one of them is already sufficient for a unique query) - you must however specify at least one property.
-
-`ConnectDTO`s are used for relation fields in `CreateDTO`s and `UpdateDTO`s.
-
-### CreateDTO
-
-This kind of DTO represents the structure of input-data to expect from 'outside' (e.g. REST API consumer) when attempting to `create` a new instance of a `Model`.
-Typically the requirements for database schema differ from what we want to allow users to do.
-As an example (and this is the opinion represented in this generator), we don't think that relation scalar fields should be exposed to users for `create`, `update`, or `delete` activities (btw. TypeScript types generated in PrismaClient exclude these fields as well). If however, your schema defines a required relation, creating an entity of that Model would become quite difficult without the relation data.
-In some cases you can derive information regarding related instances from context (e.g. HTTP path on the rest endpoint `/api/post/:postid/comment` to create a `Comment` with relation to a `Post`). For all other cases, we have the
-
-- `@DtoRelationCanCreateOnCreate`
-- `@DtoRelationCanConnectOnCreate`
-- `@DtoRelationCanCreateOnUpdate`
-- `@DtoRelationCanConnectOnUpdate`
-
-[annotations](#annotations) that generate corresponding input properties on `CreateDTO` and `UpdateDTO` (optional or required - depending on the nature of the relation).
-
-When generating a `Model`s `CreateDTO` class, field that meet any of the following conditions are omitted (**order matters**):
-
-- `isReadOnly` OR is annotated with `@DtoReadOnly` (_Note:_ this apparently includes relation scalar fields)
-- field represents a relation (`field.kind === 'object'`) and is not annotated with `@DtoRelationCanCreateOnCreate` or `@DtoRelationCanConnectOnCreate`
-- field is a [relation scalar](https://www.prisma.io/docs/concepts/components/prisma-schema/relations/#annotated-relation-fields-and-relation-scalar-fields)
-- field is not annotated with `@DtoCreateOptional` AND
-  - `isId && hasDefaultValue` (id fields are not supposed to be provided by the user)
-  - `isUpdatedAt` ([Prisma](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#updatedat) will inject value)
-  - `isRequired && hasDefaultValue` (for schema-required fields that fallback to a default value when empty. Think: `createdAt` timestamps with `@default(now())` (see [now()](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#now)))
-
-### UpdateDTO
-
-When generating a `Model`s `UpdateDTO` class, field that meet any of the following conditions are omitted (**order matters**):
-
-- field is annotated with `@DtoUpdateOptional`
-- `isReadOnly` OR is annotated with `@DtoReadOnly` (_Note:_ this apparently includes relation scalar fields)
-- `isId` (id fields are not supposed to be updated by the user)
-- field represents a relation (`field.kind === 'object'`) and is not annotated with `@DtoRelationCanCreateOnUpdate` or `@DtoRelationCanConnectOnUpdate`
-- field is a [relation scalar](https://www.prisma.io/docs/concepts/components/prisma-schema/relations/#annotated-relation-fields-and-relation-scalar-fields)
-- field is not annotated with `@DtoUpdateOptional` AND
-  - `isId` (id fields are not supposed to be updated by the user)
-  - `isUpdatedAt` ([Prisma](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#updatedat) will inject value)
-  - `isRequired && hasDefaultValue` (for schema-required fields that fallback to a default value when empty. Think: `createdAt` timestamps with `@default(now())` (see [now()](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#now)))
-
-### Entity
-
-When generating a `Model`s `Entity` class, only fields annotated with `@DtoEntityHidden` are omitted.
-All other fields are only manipulated regarding their `isRequired` and `isNullable` flags.
-
-By default, every scalar field in an entity is `required` meaning it doesn't get the TypeScript "optional member flag" `?` next to it's name. Fields that are marked as optional in PrismaSchema are treated as `nullable` - meaning their TypeScript type is a union of `field.type` and `null` (e.g. `string | null`).
-
-Relation and [relation scalar](https://www.prisma.io/docs/concepts/components/prisma-schema/relations/#annotated-relation-fields-and-relation-scalar-fields) fields are treated differently. If you don't specifically `include` a relation in your query, those fields will not exist in the response.
-
-- every relation field is always optional (`isRequired = false`)
-- relations are nullable except when
-  - the relation field is a one-to-many or many-to-many (i.e. list) type (would return empty array if no related records found)
-  - the relation was originally flagged as required (`isRequired = true`)
-  - the relation field is annotated with `@DtoRelationRequired` (do this when you mark a relation as optional in PrismaSchema because you don't want (SQL) `ON DELETE CASCADE` behavior - but your logical data schema sees this relation as required)
-
-## <a name="whats-new-in-this-fork"></a>What's New in This Fork?
-
-### 🚀 Smart Merge System
-- **Preserve Custom Fields**: Add your own custom fields to generated DTOs and they'll be preserved during regeneration
-- **Keep Decorators**: Custom decorators (`@ApiProperty`, `@Expose`, `@IsEmail`, etc.) are maintained
-- **Intelligent Detection**: Automatically distinguishes between schema-generated and user-defined fields
-
-### 🏗️ Modular Architecture
-- **Clean Code Principles**: Refactored from monolithic structure to modular, testable components
-- **Eliminated Code Duplication**: 90% reduction in duplicate code across DTO generators
-- **SOLID Principles**: Single Responsibility, Open/Closed, Dependency Inversion applied
-- **Better Maintainability**: Each module has a specific purpose and can be tested independently
-
-### 🧪 Enhanced Quality
-- **Template Method Pattern**: Consistent behavior with specific customizations
-- **Dependency Injection**: Better testability and extensibility
-- **Type Safety**: Improved TypeScript interfaces and type checking
-- **Performance**: Optimized import generation and field processing
-
-### 🔧 Developer Experience
-- **Extensible Configurations**: Easy to add new DTO types or modify existing behavior
-- **Better Error Handling**: More informative error messages and fallback strategies
-- **Comprehensive Testing**: Improved test coverage and debugging capabilities
-
-## <a name="architecture-improvements"></a>Architecture Improvements
-
-### 🏗️ Modular Design
-
-This fork has been completely refactored from a monolithic structure to a clean, modular architecture:
-
-#### Before vs After
-
-**Before**: Large, monolithic classes with significant code duplication
-- `TemplateHelpers`: ~300 lines with mixed responsibilities
-- `compute-*-params`: ~70% duplicate code across Create/Update/Entity generators
-- Hard to test and maintain
-
-**After**: Modular, focused components
-- **Template Helpers**: Split into 5 specialized modules
-- **Shared Utilities**: Reusable components with single responsibilities  
-- **Configuration-Based**: Each DTO type defines only its specific rules
-- **90% Reduction**: In code duplication
-
-#### New Module Structure
-
-```
-src/
-├── generators/
-│   ├── template-helpers/              # Modular template helpers
-│   │   ├── naming-strategy.ts         # Class/file naming
-│   │   ├── type-converter.ts          # Prisma → TypeScript types
-│   │   ├── import-generator.ts        # Import statement generation
-│   │   ├── template-utilities.ts      # Template utilities
-│   │   └── property-renderer.ts       # Property rendering
-│   ├── helpers/                       # Specialized helpers
-│   │   ├── array-helper.ts            # Array operations
-│   │   ├── import-statement-merger.ts # Import merging
-│   │   ├── prisma-client-import-helper.ts # Prisma imports
-│   │   └── relation-field-helper.ts   # Relation operations
-│   ├── compute-model-params/          # DTO parameter computation
-│   │   ├── shared/                    # Shared processing logic
-│   │   ├── configs/                   # DTO-specific configurations
-│   │   └── base-model-params-computer.ts # Template method base
-│   └── commands/
-│       └── merge-strategies/          # Smart merge implementations
-```
-
-#### Key Principles Applied
-
-✅ **Single Responsibility Principle**: Each class has one clear purpose  
-✅ **Open/Closed Principle**: Open for extension, closed for modification  
-✅ **Dependency Inversion**: Depend on abstractions, not concretions  
-✅ **DRY (Don't Repeat Yourself)**: Eliminated code duplication  
-✅ **Template Method Pattern**: Common algorithms with customizable steps  
-
-### 🧪 Benefits Achieved
-
-#### Maintainability
-- **Smaller Files**: 50-100 lines vs 300+ lines
-- **Focused Responsibilities**: Each module does one thing well  
-- **Easier Debugging**: Problems isolated to specific modules
-
-#### Testability  
-- **Unit Testing**: Each module can be tested independently
-- **Mocking**: Easy to mock dependencies for testing
-- **Test Coverage**: Better coverage with focused tests
-
-#### Extensibility
-- **New DTO Types**: Add by implementing configuration interfaces
-- **Custom Behavior**: Override specific methods in base classes
-- **Plugin Architecture**: Easy to add new processing strategies
-
-#### Performance
-- **Optimized Imports**: Intelligent import merging and deduplication
-- **Lazy Loading**: Components loaded only when needed
-- **Efficient Processing**: Reduced redundant operations
-
-### 🔄 Migration Guide
-
-The refactoring maintains **100% API compatibility**. All existing usage patterns continue to work:
+Add custom fields that will be preserved during regeneration:
 
 ```typescript
-// This still works exactly the same!
-import { TemplateHelpers } from './generators/template-helpers';
+// Before regeneration
+export class CreateUserDto {
+  // @generated from prisma schema
+  @ApiProperty()
+  email: string;
 
-const helpers = new TemplateHelpers(options);
-const createDtoName = helpers.createDtoName('User'); // "CreateUserDto"
+  // @generated from prisma schema
+  @ApiProperty()
+  name: string;
+
+  // Custom field - will be preserved
+  @ApiProperty({ description: 'Terms acceptance' })
+  @IsBoolean()
+  acceptTerms: boolean;
+
+  // Custom validation
+  @ApiProperty({ description: 'Password confirmation' })
+  @IsString()
+  @MinLength(8)
+  passwordConfirmation: string;
+}
+
+// After running npx prisma generate - custom fields are preserved!
+export class CreateUserDto {
+  // @generated from prisma schema  
+  @ApiProperty()
+  email: string;
+
+  // @generated from prisma schema
+  @ApiProperty()
+  name: string;
+
+  // Custom field - preserved during regeneration
+  @ApiProperty({ description: 'Terms acceptance' })
+  @IsBoolean() 
+  acceptTerms: boolean;
+
+  // Custom validation - preserved during regeneration
+  @ApiProperty({ description: 'Password confirmation' })
+  @IsString()
+  @MinLength(8)
+  passwordConfirmation: string;
+}
 ```
 
-However, you can now also use individual modules for specialized needs:
-
-```typescript
-// Use specific modules for advanced scenarios
-import { PrismaTypeConverter } from './generators/template-helpers/type-converter';
-import { ArrayHelper } from './generators/helpers/array-helper';
-
-const converter = new PrismaTypeConverter();
-const uniqueItems = ArrayHelper.uniq([1, 2, 2, 3]); // [1, 2, 3]
-```
-
-For detailed migration information, see our [Migration Guide](./MIGRATION_COMPLETE.md).
-## <a name="license"></a>License
+## License
 
 All files are released under the [Apache License 2.0](https://github.com/vegardit/prisma-generator-nestjs-dto/blob/master/LICENSE).
 
 ## Contributing
 
-This fork includes significant improvements and new features. We welcome contributions! 
-
-### Recent Major Improvements
-
-- **Smart Merge System**: Preserves custom fields during regeneration
-- **Modular Architecture**: Complete refactoring to clean, maintainable code
-- **Enhanced Testing**: Better test coverage and debugging capabilities
-- **Performance Optimizations**: Improved generation speed and memory usage
-
-Please feel free to:
+We welcome contributions! Please feel free to:
 - Report issues
 - Submit feature requests  
 - Contribute code improvements
-- Suggest architectural enhancements
 
 ### Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/prisma-generator-nestjs-dto
+git clone https://github.com/WeversonNA/prisma-generator-nestjs-dto.git
 
 # Install dependencies
 npm install
@@ -464,4 +377,4 @@ npx prisma generate
 
 ## Acknowledgments
 
-This fork builds upon the excellent foundation provided by the original `@vegardit/prisma-generator-nestjs-dto` project. We've enhanced it with modern software engineering practices and new features while maintaining full backward compatibility.
+This project builds upon the excellent foundation provided by the original `@vegardit/prisma-generator-nestjs-dto` project.

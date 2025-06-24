@@ -1,19 +1,16 @@
-import { readFileSync } from 'fs';
 import {
   DTO_RELATION_MODIFIERS,
   DTO_RELATION_MODIFIERS_ON_CREATE,
   DTO_RELATION_MODIFIERS_ON_UPDATE,
-} from './annotations';
-import { ImportStatementParams } from './types';
+} from '../annotations';
+import {
+  DecoratorConfigProcessor,
+  DecoratorImportMapping,
+} from './decorator-config-processor';
 
 interface ValidDecoratorResult {
   importPath: string;
   decoratorName: string;
-}
-
-interface DecoratorCategoryConfig {
-  importPath: string;
-  names: (string | RegExp)[];
 }
 
 export class DecoratorStrategy {
@@ -149,38 +146,15 @@ export class DecoratorStrategy {
     },
   ];
 
-  private readonly decoratorImportMap: { name: RegExp; importPath: string }[];
+  private readonly decoratorImportMap: readonly DecoratorImportMapping[];
 
   constructor(customDecoratorConfigsPath?: string) {
-    let combinedCategories = this.decoratorCategories;
-
-    let customConfigs: DecoratorCategoryConfig[] = [];
-    if (customDecoratorConfigsPath) {
-      try {
-        const customDecoratorConfigs = readFileSync(
-          customDecoratorConfigsPath,
-          'utf8',
-        );
-
-        customConfigs = JSON.parse(customDecoratorConfigs);
-      } catch (err) {
-        throw new Error('Invalid JSON for customDecoratorConfigs');
-      }
-    }
-    if (customConfigs.length) {
-      const processedCustomConfigs = customConfigs.map((category) => ({
-        ...category,
-        names: category.names.map((name) =>
-          typeof name === 'string' ? new RegExp(`^@${name}\\b`) : name,
-        ),
-      }));
-      combinedCategories = [...combinedCategories, ...processedCustomConfigs];
-    }
-    this.decoratorCategories = combinedCategories;
-    this.decoratorImportMap = this.decoratorCategories.flatMap(
-      ({ importPath, names }) =>
-        (names as RegExp[]).map((name) => ({ name, importPath })),
+    const decoratorProcessor = new DecoratorConfigProcessor(
+      this.decoratorCategories,
+      customDecoratorConfigsPath,
     );
+
+    this.decoratorImportMap = decoratorProcessor.mappings;
   }
 
   getValidDecorators(doc: string): string[] {
@@ -209,6 +183,7 @@ export class DecoratorStrategy {
   getValidDecoratorAndImportsByDoc(doc?: string): ValidDecoratorResult[] {
     if (!doc) return [];
     const decorators = this.decoratorsStringToArray(doc);
+
     return decorators
       .map((decorator) => this.getValidDecoratorAndImports(decorator))
       .filter((result): result is ValidDecoratorResult => !!result);
@@ -233,6 +208,7 @@ export class DecoratorStrategy {
       name.test(decoratorName),
     );
     if (!match) return undefined;
+
     return { importPath: match.importPath, decoratorName: match.name.source };
   }
 }

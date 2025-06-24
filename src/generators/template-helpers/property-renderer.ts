@@ -3,12 +3,19 @@ import { TemplateUtilities } from './template-utilities';
 import { TypeProvider } from './interfaces';
 
 export class PropertyRenderer {
-  constructor(private readonly typeProvider: TypeProvider) {}
+  private templateUtilities: TemplateUtilities;
+
+  constructor(
+    private readonly typeProvider: TypeProvider,
+    decoratorConfigPath?: string,
+  ) {
+    this.templateUtilities = new TemplateUtilities(decoratorConfigPath);
+  }
 
   addDecorator(field: ParsedField, forEntity = false): string {
     return forEntity
-      ? TemplateUtilities.buildEntityDecorator(field)
-      : TemplateUtilities.buildDtoDecorator(field);
+      ? this.templateUtilities.buildEntityDecorator(field)
+      : this.templateUtilities.buildDtoDecorator(field);
   }
 
   fieldToDtoProp(
@@ -17,7 +24,7 @@ export class PropertyRenderer {
     forceOptional = false,
     addExposePropertyDecorator = false,
   ): string {
-    const optionalMark = TemplateUtilities.unless(
+    const optionalMark = this.templateUtilities.unless(
       forceOptional ? false : field.isRequired,
       '?',
     );
@@ -33,17 +40,23 @@ export class PropertyRenderer {
     );
   }
 
-  fieldToEntityProp(field: ParsedField): string {
-    const opt = TemplateUtilities.unless(field.isRequired, '?');
-    const nullable = TemplateUtilities.when(field.isNullable, ' | null');
+  fieldToEntityProp(
+    field: ParsedField,
+    entityPrefix = '',
+    entitySuffix = '',
+  ): string {
+    const opt = this.templateUtilities.unless(field.isRequired, '?');
+    const nullable = this.templateUtilities.when(field.isNullable, ' | null');
 
     const decorator = this.addDecorator(field, true);
     const decoratorWithNewline = decorator ? decorator + '\n' : '';
 
+    const type = this.getFieldType(field, false, entityPrefix, entitySuffix);
+
     return (
       `  // @generated from prisma schema\n` +
       decoratorWithNewline +
-      `  ${field.name}${opt}: ${this.getFieldType(field)}${nullable};`
+      `  ${field.name}${opt}: ${type}${nullable};`
     );
   }
 
@@ -53,9 +66,9 @@ export class PropertyRenderer {
     forceOptional = false,
     addExposePropertyDecorator = false,
   ): string {
-    return TemplateUtilities.each(
+    return this.templateUtilities.each(
       fields,
-      (f) =>
+      (f: ParsedField) =>
         this.fieldToDtoProp(
           f,
           useInputTypes,
@@ -66,15 +79,29 @@ export class PropertyRenderer {
     );
   }
 
-  fieldsToEntityProps(fields: ParsedField[]): string {
-    return TemplateUtilities.each(
+  fieldsToEntityProps(
+    fields: ParsedField[],
+    entityPrefix = '',
+    entitySuffix = '',
+  ): string {
+    return this.templateUtilities.each(
       fields,
-      (f) => this.fieldToEntityProp(f),
+      (f: ParsedField) => this.fieldToEntityProp(f, entityPrefix, entitySuffix),
       '\n',
     );
   }
 
-  private getFieldType(field: ParsedField, toInputType = false): string {
-    return this.typeProvider.fieldType(field, toInputType);
+  private getFieldType(
+    field: ParsedField,
+    toInputType = false,
+    entityPrefix = '',
+    entitySuffix = '',
+  ): string {
+    return this.typeProvider.fieldType(
+      field,
+      toInputType,
+      entityPrefix,
+      entitySuffix,
+    );
   }
 }

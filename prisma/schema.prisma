@@ -13,10 +13,10 @@ generator nestjsDto {
   updateDtoPrefix                 = "Update"
   dtoSuffix                       = "Dto"
   entityPrefix                    = ""
-  entitySuffix                    = ""
+  entitySuffix                    = "Entity"
   addExposePropertyDecorator      = "true"
   fileNamingStyle                 = "camel"
-  decoratorConfigPath             = "./src/example-decorator-config.json"
+  decoratorConfigPath             = "./decorator-config.json"
 }
 
 model Product {
@@ -44,6 +44,7 @@ model Product {
   companyId   String   @db.Uuid
 
   /// @ApiProperty({description: "The category to which the product belongs."})
+  /// @Component({type: () => CategoryDto})
   /// @DtoRelationRequired
   /// @DtoRelationCanConnectOnCreate
   category Category @relation(fields: [categoryId], references: [id])

@@ -8,7 +8,7 @@ import {
 import type { DMMF } from '@prisma/generator-helper';
 import { TemplateHelpers } from './template-helpers';
 import type { ImportStatementParams, Model, ParsedField } from './types';
-import { DecoratorStrategy } from './decorator-strategy';
+import { DecoratorStrategy } from './decorators/decorator-strategy';
 
 export interface RelationInputResult {
   type: string;

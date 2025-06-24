@@ -81,6 +81,7 @@ export const generate = (options: GeneratorOptions) => {
     entitySuffix,
     fileNamingStyle,
     addExposePropertyDecorator,
+    decoratorConfigPath,
   });
 
   const indexCollections: Record<string, WriteableFileSpecs> = {};

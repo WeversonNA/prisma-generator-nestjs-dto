@@ -1,36 +1,41 @@
-import { DecoratorStrategy } from '../decorator-strategy';
+import { DecoratorStrategy } from '../decorators/decorator-strategy';
 import { ParsedField } from '../types';
 import { PrismaTypeConverter } from './type-converter';
 
 export class TemplateUtilities {
-  private static prismaTypeConverter = new PrismaTypeConverter();
-  private static decoratorStrategy = new DecoratorStrategy();
-  static echo(input: string): string {
+  private decoratorStrategy: DecoratorStrategy;
+  private prismaTypeConverter = new PrismaTypeConverter();
+
+  constructor(decoratorConfigPath?: string) {
+    this.decoratorStrategy = new DecoratorStrategy(decoratorConfigPath);
+  }
+
+  echo(input: string): string {
     return input;
   }
 
-  static when(condition: unknown, thenTpl: string, elseTpl = ''): string {
+  when(condition: unknown, thenTpl: string, elseTpl = ''): string {
     return condition ? thenTpl : elseTpl;
   }
 
-  static unless(condition: unknown, thenTpl: string, elseTpl = ''): string {
+  unless(condition: unknown, thenTpl: string, elseTpl = ''): string {
     return !condition ? thenTpl : elseTpl;
   }
 
-  static each<T>(arr: T[], fn: (item: T) => string, joinWith = ''): string {
+  each<T>(arr: T[], fn: (item: T) => string, joinWith = ''): string {
     return arr.map(fn).join(joinWith);
   }
 
-  static hasApiPropertyDoc(field: ParsedField): boolean {
+  hasApiPropertyDoc(field: ParsedField): boolean {
     return Boolean(field.documentation?.includes('@ApiProperty'));
   }
 
-  static hasSomeApiPropertyDoc(fields: ParsedField[]): boolean {
-    return fields.some((f) => TemplateUtilities.hasApiPropertyDoc(f));
+  hasSomeApiPropertyDoc(fields: ParsedField[]): boolean {
+    return fields.some((f) => this.hasApiPropertyDoc(f));
   }
 
-  static buildEntityDecorator(field: ParsedField): string {
-    if (!TemplateUtilities.hasApiPropertyDoc(field)) {
+  buildEntityDecorator(field: ParsedField): string {
+    if (!this.hasApiPropertyDoc(field)) {
       return '';
     }
     const apiPropertyLines = (field.documentation ?? '')
@@ -40,7 +45,7 @@ export class TemplateUtilities {
     return apiPropertyLines.join('\n') + (apiPropertyLines.length ? '' : '');
   }
 
-  static buildDtoDecorator(field: ParsedField): string {
+  buildDtoDecorator(field: ParsedField): string {
     if (field.kind === 'enum') {
       return this.buildEnumDecorator(field);
     }
@@ -51,7 +56,7 @@ export class TemplateUtilities {
     return '';
   }
 
-  static buildEnumDecorator(field: ParsedField): string {
+  buildEnumDecorator(field: ParsedField): string {
     const isValid = this.decoratorStrategy.verifyIfDecoratorIsValid(
       field.documentation ?? '',
     );
@@ -60,7 +65,7 @@ export class TemplateUtilities {
       : `@ApiProperty({ enum: ${this.prismaTypeConverter.fieldType(field)} })\n`;
   }
 
-  static buildFieldDecorator(field: ParsedField): string {
+  buildFieldDecorator(field: ParsedField): string {
     const decorators = this.decoratorStrategy.getValidDecorators(
       field.documentation ?? '',
     );

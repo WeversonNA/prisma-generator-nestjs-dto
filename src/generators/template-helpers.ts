@@ -16,6 +16,7 @@ export interface TemplateHelpersOptions {
   dtoSuffix: string;
   entityPrefix: string;
   entitySuffix: string;
+  decoratorConfigPath?: string;
   transformClassNameCase?: (input: string) => string;
   transformFileNameCase?: (input: string) => string;
 }
@@ -24,6 +25,7 @@ export class TemplateHelpers implements TypeProvider, EntityNameProvider {
   private readonly namingStrategy: DefaultNamingStrategy;
   private readonly typeConverter: PrismaTypeConverter;
   private readonly propertyRenderer: PropertyRenderer;
+  private readonly templateUtilities: TemplateUtilities;
 
   constructor(private readonly options: TemplateHelpersOptions) {
     this.namingStrategy = new DefaultNamingStrategy(
@@ -31,15 +33,19 @@ export class TemplateHelpers implements TypeProvider, EntityNameProvider {
       options.transformFileNameCase || ((s) => s),
     );
     this.typeConverter = new PrismaTypeConverter();
-    this.propertyRenderer = new PropertyRenderer(this);
+    this.propertyRenderer = new PropertyRenderer(
+      this,
+      options.decoratorConfigPath,
+    );
+    this.templateUtilities = new TemplateUtilities(options.decoratorConfigPath);
   }
 
   // === Naming Methods ===
-  entityName(name: string): string {
+  entityName(name: string, ignorePrefixAndSufix = false): string {
     return this.namingStrategy.transformClassName(
       name,
-      this.options.entityPrefix,
-      this.options.entitySuffix,
+      ignorePrefixAndSufix ? '' : this.options.entityPrefix,
+      ignorePrefixAndSufix ? '' : this.options.entitySuffix,
     );
   }
 
@@ -105,8 +111,18 @@ export class TemplateHelpers implements TypeProvider, EntityNameProvider {
   }
 
   // === Type Methods ===
-  fieldType(field: ParsedField, toInputType = false): string {
-    return this.typeConverter.fieldType(field, toInputType);
+  fieldType(
+    field: ParsedField,
+    toInputType = false,
+    entityPrefix = '',
+    entitySuffix = '',
+  ): string {
+    return this.typeConverter.fieldType(
+      field,
+      toInputType,
+      entityPrefix,
+      entitySuffix,
+    );
   }
 
   // === Property Rendering Methods ===
@@ -124,17 +140,50 @@ export class TemplateHelpers implements TypeProvider, EntityNameProvider {
     );
   }
 
-  fieldsToEntityProps(fields: ParsedField[]): string {
-    return this.propertyRenderer.fieldsToEntityProps(fields);
+  fieldsToEntityProps(
+    fields: ParsedField[],
+    entityPrefix = '',
+    entitySuffix = '',
+  ): string {
+    return this.propertyRenderer.fieldsToEntityProps(
+      fields,
+      entityPrefix,
+      entitySuffix,
+    );
   }
 
   // === Static Utility Methods ===
-  static echo = TemplateUtilities.echo;
-  static when = TemplateUtilities.when;
-  static unless = TemplateUtilities.unless;
-  static each = TemplateUtilities.each;
-  static hasSomeApiPropertyDoc = TemplateUtilities.hasSomeApiPropertyDoc;
-  static hasApiPropertyDoc = TemplateUtilities.hasApiPropertyDoc;
+  static echo(input: string): string {
+    return input;
+  }
+
+  static when(condition: unknown, thenTpl: string, elseTpl = ''): string {
+    return condition ? thenTpl : elseTpl;
+  }
+
+  static unless(condition: unknown, thenTpl: string, elseTpl = ''): string {
+    return !condition ? thenTpl : elseTpl;
+  }
+
+  static each<T>(arr: T[], fn: (item: T) => string, joinWith = ''): string {
+    return arr.map(fn).join(joinWith);
+  }
+
+  static hasSomeApiPropertyDoc(
+    fields: ParsedField[],
+    decoratorConfigPath?: string,
+  ): boolean {
+    const tempUtils = new TemplateUtilities(decoratorConfigPath);
+    return tempUtils.hasSomeApiPropertyDoc(fields);
+  }
+
+  static hasApiPropertyDoc(
+    field: ParsedField,
+    decoratorConfigPath?: string,
+  ): boolean {
+    const tempUtils = new TemplateUtilities(decoratorConfigPath);
+    return tempUtils.hasApiPropertyDoc(field);
+  }
 
   static importStatement = ImportStatementGenerator.importStatement;
   static importStatements = ImportStatementGenerator.importStatements;
@@ -146,8 +195,10 @@ export class TemplateHelpers implements TypeProvider, EntityNameProvider {
   }
 
   // === API Extra Models ===
-  apiExtraModels(names: string[]): string {
-    const list = names.map((n) => this.entityName(n)).join(', ');
+  apiExtraModels(names: string[], ignorePrefixAndSufix = false): string {
+    const list = names
+      .map((n) => this.entityName(n, ignorePrefixAndSufix))
+      .join(', ');
     return `@ApiExtraModels(${list})`;
   }
 

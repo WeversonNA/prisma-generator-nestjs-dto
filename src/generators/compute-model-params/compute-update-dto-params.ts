@@ -9,13 +9,17 @@ interface ComputeUpdateDtoParamsParam {
   allModels: Model[];
   templateHelpers: TemplateHelpers;
   addExposePropertyDecorator: boolean;
+  customDecoratorConfigsPath?: string;
 }
 
 export class UpdateDtoParamsComputer extends BaseModelParamsComputer {
   private fieldConfig: UpdateDtoFieldConfig;
 
-  constructor(templateHelpers: TemplateHelpers) {
-    super(templateHelpers);
+  constructor(
+    templateHelpers: TemplateHelpers,
+    protected customDecoratorConfigsPath?: string,
+  ) {
+    super(templateHelpers, customDecoratorConfigsPath);
     this.fieldConfig = new UpdateDtoFieldConfig(templateHelpers);
   }
 
@@ -27,7 +31,6 @@ export class UpdateDtoParamsComputer extends BaseModelParamsComputer {
     model: Model,
     allModels: Model[],
     addExposePropertyDecorator: boolean,
-    customDecoratorConfigsPath?: string,
   ): UpdateDtoParams {
     const fieldsWithoutIds = model.fields.filter((field) => !field.isId);
 
@@ -40,7 +43,6 @@ export class UpdateDtoParamsComputer extends BaseModelParamsComputer {
       modelWithoutIds,
       allModels,
       addExposePropertyDecorator,
-      customDecoratorConfigsPath,
     );
 
     const imports = this.finalizeImports(
@@ -65,7 +67,11 @@ export const computeUpdateDtoParams = ({
   allModels,
   templateHelpers,
   addExposePropertyDecorator,
+  customDecoratorConfigsPath,
 }: ComputeUpdateDtoParamsParam): UpdateDtoParams => {
-  const computer = new UpdateDtoParamsComputer(templateHelpers);
+  const computer = new UpdateDtoParamsComputer(
+    templateHelpers,
+    customDecoratorConfigsPath,
+  );
   return computer.computeParams(model, allModels, addExposePropertyDecorator);
 };

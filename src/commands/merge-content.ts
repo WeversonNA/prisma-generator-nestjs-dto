@@ -6,11 +6,13 @@ import {
   ImportDeclaration,
   PropertyDeclaration,
 } from 'ts-morph';
-import { DecoratorStrategy } from '../generators/decorator-strategy';
+import { DecoratorStrategy } from '../generators/decorators/decorator-strategy';
 
 export class MergeContent {
-  private readonly decoratorStrategy: DecoratorStrategy =
-    new DecoratorStrategy();
+  private readonly decoratorStrategy: DecoratorStrategy;
+  constructor(protected readonly customDecoratorConfigsPath?: string) {
+    this.decoratorStrategy = new DecoratorStrategy(customDecoratorConfigsPath);
+  }
 
   merge(existingText: string, generatedText: string): string {
     const project = new Project({ useInMemoryFileSystem: true });
