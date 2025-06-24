@@ -29,8 +29,15 @@ export class UpdateDtoParamsComputer extends BaseModelParamsComputer {
     addExposePropertyDecorator: boolean,
     customDecoratorConfigsPath?: string,
   ): UpdateDtoParams {
+    const fieldsWithoutIds = model.fields.filter((field) => !field.isId);
+
+    const modelWithoutIds = {
+      ...model,
+      fields: fieldsWithoutIds,
+    };
+
     const fieldResult = this.processModelFields(
-      model,
+      modelWithoutIds,
       allModels,
       addExposePropertyDecorator,
       customDecoratorConfigsPath,
