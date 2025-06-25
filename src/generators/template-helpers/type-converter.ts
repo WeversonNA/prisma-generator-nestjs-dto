@@ -42,6 +42,7 @@ export class PrismaTypeConverter implements TypeConverter {
       case 'scalar':
         return this.scalarToTS(field.type, toInputType);
       case 'enum':
+        return `${field.type}${field.isList ? '[]' : ''}`;
       case 'relation-input':
         return `${entityPrefix}${field.type}${entitySuffix}`;
       default:

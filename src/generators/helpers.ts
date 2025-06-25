@@ -212,6 +212,7 @@ export class Helpers {
           isList: field.isList,
         })),
         true,
+        field?.isRequired,
         addExposePropertyDecorator,
       )}\n}`,
     );
