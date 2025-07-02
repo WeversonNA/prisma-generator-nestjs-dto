@@ -40,7 +40,27 @@ export class SmartMergeContentV2 {
     Map<string, { hasArgs: boolean; args: Set<string> }>
   >();
 
+  /**
+   * Clear all collected data to prevent accumulation between merges
+   */
+  private clearAllData(): void {
+    this.IMPORTS.clear();
+    this.CLASSES.clear();
+    this.ENUMS.clear();
+    this.TYPES.clear();
+    this.INTERFACES.clear();
+    this.FUNCTIONS.clear();
+    this.CONSTRUCTORS.clear();
+    this.CLASS_EXTENDS.clear();
+    this.CLASS_IMPLEMENTS.clear();
+    this.INTERFACE_EXTENDS.clear();
+    this.CLASS_DECORATORS.clear();
+  }
+
   merge(existingText: string, generatedText: string): string {
+    // Clear all previous data to prevent accumulation
+    this.clearAllData();
+
     if (!existingText.trim()) {
       return generatedText;
     }
@@ -413,17 +433,27 @@ export class SmartMergeContentV2 {
       const moduleSpecifier = imp.getModuleSpecifierValue();
 
       const namedImports = imp.getNamedImports().map((ni) => ni.getName());
-
       const defaultImport = imp.getDefaultImport()?.getText();
-
       const namespaceImport = imp.getNamespaceImport()?.getText();
 
-      this.IMPORTS.set(moduleSpecifier, [
-        ...(this.IMPORTS.get(moduleSpecifier) || []),
-        ...((namedImports.length > 0 && namedImports) as string[]),
-        ...(defaultImport ? [defaultImport] : []),
-        ...(namespaceImport ? [namespaceImport] : []),
-      ]);
+      // Get existing imports for this module or create new Set
+      const existingImports = new Set(this.IMPORTS.get(moduleSpecifier) || []);
+
+      // Add named imports
+      namedImports.forEach((importName) => existingImports.add(importName));
+
+      // Add default import if exists
+      if (defaultImport) {
+        existingImports.add(defaultImport);
+      }
+
+      // Add namespace import if exists
+      if (namespaceImport) {
+        existingImports.add(namespaceImport);
+      }
+
+      // Update the map with deduplicated imports
+      this.IMPORTS.set(moduleSpecifier, Array.from(existingImports));
     });
   }
 
