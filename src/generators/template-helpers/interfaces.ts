@@ -1,4 +1,4 @@
-import { ParsedField } from '../types';
+import type { ParsedField } from '../types';
 
 export interface TypeProvider {
   fieldType(

@@ -1,4 +1,4 @@
-import { TemplateHelpers } from './template-helpers';
+import { TemplateHelpers } from './helpers/template-helpers';
 import type { ConnectDtoParams } from './types';
 
 interface GenerateConnectDtoParam extends ConnectDtoParams {
@@ -11,7 +11,7 @@ export const generateConnectDto = ({
   imports = [],
   templateHelpers: t,
   addExposePropertyDecorator,
-}: GenerateConnectDtoParam) => {
+}: GenerateConnectDtoParam): string => {
   const template = `
 ${TemplateHelpers.importStatements(imports)}
 

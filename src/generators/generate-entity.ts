@@ -1,4 +1,4 @@
-import { TemplateHelpers } from './template-helpers';
+import { TemplateHelpers } from './helpers/template-helpers';
 import type { EntityParams } from './types';
 
 export interface GenerateEntityParam extends EntityParams {
@@ -14,7 +14,7 @@ export const generateEntity = ({
   templateHelpers: t,
   entityPrefix,
   entitySuffix,
-}: GenerateEntityParam) => `
+}: GenerateEntityParam): string => `
 ${TemplateHelpers.importStatements(imports)}
 
 ${TemplateHelpers.when(apiExtraModels.length, t.apiExtraModels(apiExtraModels))}

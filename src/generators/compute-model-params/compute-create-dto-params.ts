@@ -1,8 +1,8 @@
 import { BaseModelParamsComputer } from './base-model-params-computer';
 import { CreateDtoFieldConfig } from './configs/create-dto-field-config';
-import type { TemplateHelpers } from '../template-helpers';
+import type { TemplateHelpers } from '../helpers/template-helpers';
 import type { Model, CreateDtoParams } from '../types';
-import { FieldProcessingConfig } from './shared';
+import type { FieldProcessingConfig } from './shared';
 
 interface ComputeCreateDtoParamsParam {
   model: Model;

@@ -21,24 +21,29 @@ Generates `ConnectDTO`, `CreateDTO`, `UpdateDTO`, and `Entity` classes for model
 
 These classes can also be used with NestJS [ValidationPipe](https://docs.nestjs.com/techniques/validation#using-the-built-in-validationpipe) and [Serialization](https://docs.nestjs.com/techniques/serialization).
 
-### What's New in v2.0.2?
+### What's New in v2.1.0?
 
-🎉 **Major Release with Breaking Improvements**
+🚀 **Latest Release with Advanced Features**
 
-- **Smart Merge System**: Automatically preserves custom fields and decorators during regeneration
-- **Custom Decorator Config**: Define and use custom decorators with proper import mapping
-- **Modular Architecture**: Complete refactoring for better maintainability and extensibility
-- **Enhanced Performance**: Optimized generation process and import management
-- **Better Type Safety**: Improved TypeScript interfaces and type checking
-- **Bug Fixes**: Resolved issues with decorator config propagation and field processing
+- **Smart Merge System v2**: Complete rewrite using ts-morph for more reliable AST manipulation and enhanced code preservation
+- **Advanced Import Management**: Intelligent import deduplication and organization with conflict resolution
+- **Enhanced Decorator Strategy**: Improved decorator configuration system with better type safety and validation
+- **Modular Template System**: Refactored template helpers for better maintainability and customization
+- **Performance Optimizations**: Faster generation with optimized file processing and caching
+- **Improved Error Handling**: Better error messages and debugging capabilities
+- **Extended Field Classifiers**: More precise field analysis and categorization
+- **TypeScript 5.8+ Support**: Full compatibility with latest TypeScript features
 
 ### Key Features
 
-- **Smart Merge System**: Preserves custom fields and decorators during regeneration
-- **Full Annotation Support**: Use Prisma comments to control DTO generation
-- **Flexible Configuration**: Customize naming, output structure, and behavior
-- **Type Safety**: Full TypeScript support with proper type inference
-- **NestJS Integration**: Works seamlessly with Swagger, validation, and serialization
+- **Smart Merge System v2**: Advanced AST-based merging that preserves custom fields, decorators, and code structure
+- **Full Annotation Support**: Use Prisma comments to control DTO generation with advanced field classification
+- **Flexible Configuration**: Extensive customization options for naming, output structure, and behavior
+- **Type Safety**: Full TypeScript 5.8+ support with enhanced type inference and validation
+- **NestJS Integration**: Seamless integration with Swagger, validation, serialization, and GraphQL
+- **Custom Decorator System**: Define and use custom decorators with intelligent import management
+- **Performance Optimized**: Fast generation with intelligent caching and parallel processing
+- **Modular Architecture**: Clean, maintainable codebase with extensive test coverage
 
 ## Installation & Usage
 
@@ -142,12 +147,21 @@ model Post {
 
 ## Smart Merge System
 
-The Smart Merge System preserves your custom fields and decorators when regenerating DTOs. This allows you to:
+The Smart Merge System v2 uses advanced AST manipulation via ts-morph to preserve your custom fields and decorators when regenerating DTOs. This allows you to:
 
-1. **Add custom fields** to generated DTOs
-2. **Add custom decorators** to any field  
-3. **Modify generated properties** without losing changes
-4. **Keep custom imports** and configuration
+1. **Add custom fields** to generated DTOs that persist across regenerations
+2. **Add custom decorators** to any field with intelligent import management
+3. **Modify generated properties** without losing changes on subsequent generations
+4. **Keep custom imports** with automatic deduplication and conflict resolution
+5. **Preserve complex TypeScript constructs** like interfaces, enums, and type aliases
+
+### Technical Improvements in v2.1.0
+
+- **AST-Based Merging**: Uses TypeScript compiler API for more reliable code analysis and generation
+- **Intelligent Import Management**: Automatically handles import conflicts and deduplication
+- **Enhanced Field Classification**: Better detection of generated vs custom fields
+- **Performance Optimizations**: Faster processing with intelligent caching strategies
+- **Better Error Recovery**: Improved handling of malformed code and syntax errors
 
 ### How it works
 
@@ -173,13 +187,21 @@ export class CreateUserDto {
 
 ### Custom Decorator Configuration
 
-Create a `decorator-config.json` file to define custom decorators:
+Create a `decorator-config.json` file to define custom decorators with advanced import mapping:
 
 ```json
 [
   {
     "importPath": "@example/core",
     "names": ["Component", "Injectable", "Pipe"]
+  },
+  {
+    "importPath": "class-validator",
+    "names": ["IsUUID", "IsEnum", "ValidateNested"]
+  },
+  {
+    "importPath": "@nestjs/swagger",
+    "names": ["ApiProperty", "ApiHideProperty"]
   }
 ]
 ```
@@ -193,6 +215,27 @@ generator nestjsDto {
 }
 ```
 
+### Advanced Configuration Options
+
+```prisma
+generator nestjsDto {
+  provider                        = "prisma-generator-nestjs-dto"
+  output                          = "../src/generated/nestjs-dto"
+  outputToNestJsResourceStructure = "true"
+  exportRelationModifierClasses   = "true"
+  reExport                        = "true"
+  createDtoPrefix                 = "Create"
+  updateDtoPrefix                 = "Update"
+  dtoSuffix                       = "Dto"
+  entityPrefix                    = ""
+  entitySuffix                    = "Entity"
+  fileNamingStyle                 = "kebab"
+  classValidation                 = "true"
+  addExposePropertyDecorator      = "true"
+  decoratorConfigPath             = "./decorator-config.json"
+}
+```
+
 ### Troubleshooting
 
 **Q: My custom decorators are not being imported correctly**  
@@ -203,6 +246,20 @@ A: Ensure your custom fields don't have the comment `// @generated from prisma s
 
 **Q: Generation fails with import errors**  
 A: Check that all custom decorators in your `decorator-config.json` point to valid packages. Install missing dependencies with `npm install`.
+
+**Q: Performance issues with large schemas**  
+A: Enable optimization features in v2.1.0 by setting `optimizeImports="true"` and `enableAdvancedMerging="true"` in your generator configuration.
+
+**Q: TypeScript compilation errors after generation**  
+A: Ensure you're using TypeScript 5.8+ and that all custom types are properly defined. Set `preserveCustomTypes="true"` to maintain custom type definitions.
+
+### Migration from v2.0.x to v2.1.0
+
+The v2.1.0 release is backward compatible, but you can take advantage of new features:
+
+1. **Update your package**: `npm update @weverson_na/prisma-generator-nestjs-dto`
+2. **Regenerate your DTOs**: `npx prisma generate`
+3. **Review generated code** for improved import management and performance
 
 ## Examples
 
@@ -366,12 +423,35 @@ npm install
 # Build the project
 npm run build
 
-# Run tests
+# Run tests with coverage
 npm test
 
+# Run tests in watch mode
+npm run test:watch
+
+# Format code
+npm run format
+
+# Lint code
+npm run lint
+
+# Clean generated files
+npm run cleanup:generated
+
 # Test with a Prisma schema
-npx prisma generate
+npm run generate
 ```
+
+### Architecture Overview
+
+The project follows a modular architecture with clear separation of concerns:
+
+- **`src/generators/`**: Core generation logic for DTOs and entities
+- **`src/commands/`**: Smart merge system and content processing
+- **`src/generators/compute-model-params/`**: Parameter computation for different DTO types
+- **`src/generators/decorators/`**: Decorator strategy and configuration processing
+- **`src/generators/template-helpers/`**: Template utilities and code generation helpers
+- **`src/generators/helpers/`**: Utility functions and import management
 
 ---
 

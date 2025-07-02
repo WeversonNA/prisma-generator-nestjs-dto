@@ -1,14 +1,17 @@
 import type { GeneratorOptions } from '@prisma/generator-helper';
 import { generatorHandler } from '@prisma/generator-helper';
 import { parseEnvValue } from '@prisma/internals';
-import fs from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'node:path';
 import { format } from 'prettier';
-import { SmartMergeContent } from './commands/smart-merge-content';
+import { SmartMergeContentV2 } from './commands/smart-merge-content-v2';
 import { run } from './generators';
 import type { NamingStyle, WriteableFileSpecs } from './generators/types';
 
-export const stringToBoolean = (input: string, defaultValue = false) => {
+export const stringToBoolean = (
+  input: string,
+  defaultValue = false,
+): boolean => {
   if (input === 'true') {
     return true;
   }
@@ -19,8 +22,7 @@ export const stringToBoolean = (input: string, defaultValue = false) => {
   return defaultValue;
 };
 
-export const generate = (options: GeneratorOptions) => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+export const generate = (options: GeneratorOptions): Promise<void[]> => {
   const output = parseEnvValue(options.generator.output!);
 
   const {
@@ -101,27 +103,27 @@ export const generate = (options: GeneratorOptions) => {
     });
   }
 
-  const mergeContent = new SmartMergeContent();
+  const mergeContent = new SmartMergeContentV2();
 
   return Promise.all(
     results
       .concat(Object.values(indexCollections))
       .map(async ({ fileName, content }) => {
-        await fs.mkdir(path.dirname(fileName), { recursive: true });
+        await mkdir(path.dirname(fileName), { recursive: true });
 
-        const fileExists = await fs
-          .access(fileName)
+        const fileExists = await access(fileName)
           .then(() => true)
           .catch(() => false);
+
         const writeContent = fileExists
-          ? mergeContent.merge(await fs.readFile(fileName, 'utf8'), content)
+          ? mergeContent.merge(await readFile(fileName, 'utf8'), content)
           : content;
 
         const formattedFile = await format(writeContent, {
           parser: 'typescript',
           singleQuote: true,
         });
-        return fs.writeFile(fileName, formattedFile);
+        return writeFile(fileName, formattedFile);
       }),
   );
 };

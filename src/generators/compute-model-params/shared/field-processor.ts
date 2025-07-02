@@ -1,10 +1,10 @@
 import type { DMMF } from '@prisma/generator-helper';
-import type { TemplateHelpers } from '../../template-helpers';
+import type { TemplateHelpers } from '../../helpers/template-helpers';
 import type { Model, ParsedField, ImportStatementParams } from '../../types';
-import { Helpers } from '../../helpers';
+import { Helpers } from '../../helpers/helpers';
 import { DecoratorStrategy } from '../../decorators/decorator-strategy';
-import { FieldProcessingConfig } from '../interfaces/field-processing-config.interface';
-import { FieldProcessingResult } from '../interfaces/field-processing-result.interface';
+import type { FieldProcessingConfig } from '../interfaces/field-processing-config.interface';
+import type { FieldProcessingResult } from '../interfaces/field-processing-result.interface';
 import { isAnnotatedWith, isAnnotatedWithOneOf } from '../../field-classifiers';
 
 export class FieldProcessor {

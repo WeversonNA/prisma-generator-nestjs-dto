@@ -1,9 +1,10 @@
-import type { TemplateHelpers } from '../template-helpers';
+import type { TemplateHelpers } from '../helpers/template-helpers';
 import type { Model, ImportStatementParams, ParsedField } from '../types';
 import { ImportManager } from './shared/import-manager';
-import { Helpers } from '../helpers';
+import { Helpers } from '../helpers/helpers';
 import { DecoratorStrategy } from '../decorators/decorator-strategy';
-import { FieldProcessor, FieldProcessingConfig } from './shared';
+import type { FieldProcessingConfig, FieldProcessingResult } from './shared';
+import { FieldProcessor } from './shared';
 
 export abstract class BaseModelParamsComputer {
   protected readonly fieldProcessor: FieldProcessor;
@@ -25,19 +26,26 @@ export abstract class BaseModelParamsComputer {
   protected abstract getFieldConfig(): FieldProcessingConfig;
 
   protected hasApiPropertyDoc(fields: ParsedField[]): boolean {
-    return (
-      (this.templateHelpers.constructor as any).hasSomeApiPropertyDoc?.(
-        fields,
-        this.customDecoratorConfigsPath,
-      ) || false
-    );
+    const helperConstructor = this.templateHelpers.constructor as {
+      hasSomeApiPropertyDoc?: (
+        fields: ParsedField[],
+        configPath?: string,
+      ) => boolean;
+    };
+
+    return helperConstructor.hasSomeApiPropertyDoc
+      ? helperConstructor.hasSomeApiPropertyDoc(
+          fields,
+          this.customDecoratorConfigsPath,
+        )
+      : false;
   }
 
   protected processModelFields(
     model: Model,
     allModels: Model[],
     addExposePropertyDecorator: boolean = false,
-  ) {
+  ): FieldProcessingResult {
     const config = this.getFieldConfig();
 
     return this.fieldProcessor.processFields(
@@ -65,5 +73,5 @@ export abstract class BaseModelParamsComputer {
     model: Model,
     allModels: Model[],
     addExposePropertyDecorator?: boolean,
-  ): any;
+  ): unknown;
 }

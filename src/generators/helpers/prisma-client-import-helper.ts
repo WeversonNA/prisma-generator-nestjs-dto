@@ -1,4 +1,4 @@
-import { ParsedField, ImportStatementParams } from '../types';
+import type { ParsedField, ImportStatementParams } from '../types';
 
 export class PrismaClientImportHelper {
   static makeImportsFromPrismaClient(

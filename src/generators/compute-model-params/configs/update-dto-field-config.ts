@@ -12,8 +12,8 @@ import {
   isRequiredWithDefaultValue,
   isUpdatedAt,
 } from '../../field-classifiers';
-import { FieldProcessingConfig } from '../shared';
-import { type TemplateHelpers } from '../../template-helpers';
+import type { FieldProcessingConfig } from '../shared';
+import { type TemplateHelpers } from '../../helpers/template-helpers';
 
 export class UpdateDtoFieldConfig implements FieldProcessingConfig {
   relationModifiers = DTO_RELATION_MODIFIERS_ON_UPDATE;

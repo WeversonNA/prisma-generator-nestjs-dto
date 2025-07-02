@@ -303,7 +303,7 @@ declare module '@prisma/generator-helper' {
   export function generatorHandler(handler: Handler): void;
 
   // GeneratorProcess.d.ts
-  import { ChildProcessByStdio } from 'child_process';
+  import type { ChildProcessByStdio } from 'child_process';
   export class GeneratorError extends Error {
     code: number;
     data?: any;
@@ -321,7 +321,7 @@ declare module '@prisma/generator-helper' {
     private initPromise?;
     private lastError?;
     private currentGenerateDeferred?;
-    constructor(executablePath: string, isNode?: boolean | undefined);
+    constructor(executablePath: string, isNode?: boolean);
     init(): Promise<void>;
     initSingleton(): Promise<void>;
     private handleResponse;

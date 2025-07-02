@@ -47,14 +47,14 @@ export class DecoratorConfigProcessor {
     let fileContent: string;
     try {
       fileContent = readFileSync(filePath, 'utf8');
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to read config file at ${filePath}`);
     }
 
     let parsedConfigs: unknown;
     try {
       parsedConfigs = JSON.parse(fileContent);
-    } catch (error) {
+    } catch {
       throw new Error('Config file contains invalid JSON');
     }
 
@@ -109,7 +109,7 @@ export class DecoratorConfigProcessor {
     if (pattern instanceof RegExp) return pattern;
 
     const cleanName = pattern.replace(/^@/, '').trim();
-    return new RegExp(cleanName);
+    return new RegExp(`^@${cleanName}(\\(|$)`);
   }
 
   private createMappings(

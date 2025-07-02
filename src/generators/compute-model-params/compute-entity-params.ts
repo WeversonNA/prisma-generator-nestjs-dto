@@ -1,18 +1,20 @@
 import { BaseModelParamsComputer } from './base-model-params-computer';
 import { EntityFieldConfig } from './configs/entity-field-config';
 import { ImportManager } from './shared/import-manager';
-import { Helpers } from '../helpers';
+import { Helpers } from '../helpers/helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
-import type { TemplateHelpers } from '../template-helpers';
+import type { TemplateHelpers } from '../helpers/template-helpers';
 import type {
   EntityParams,
   ImportStatementParams,
   Model,
   ParsedField,
 } from '../types';
-import { FieldProcessingConfig } from './shared';
+import type { FieldProcessingConfig } from './shared';
 import { DecoratorStrategy } from '../decorators/decorator-strategy';
+import { DTO_RELATION_REQUIRED } from '../annotations';
+import { isRequired, isAnnotatedWith } from '../field-classifiers';
 
 interface ComputeEntityParamsParam {
   model: Model;
@@ -97,7 +99,7 @@ export class EntityParamsComputer extends BaseModelParamsComputer {
     model: Model,
     allModels: Model[],
     imports: ImportStatementParams[],
-    overrides: Partial<DMMF.Field>,
+    _overrides: Partial<DMMF.Field>,
   ): void {
     if (field.type !== model.name) {
       const modelToImportFrom = allModels.find((m) => m.name === field.type);
@@ -138,8 +140,6 @@ export class EntityParamsComputer extends BaseModelParamsComputer {
     overrides: Partial<DMMF.Field>,
   ): void {
     const { [field.name]: relationNames } = relationScalarFields;
-    const { isRequired, isAnnotatedWith } = require('../field-classifiers');
-    const { DTO_RELATION_REQUIRED } = require('../annotations');
 
     const isAnyRelationRequired = relationNames.some((relationFieldName) => {
       const relationField = model.fields.find(

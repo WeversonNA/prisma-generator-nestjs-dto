@@ -1,13 +1,13 @@
-import { ImportStatementGenerator } from './template-helpers/import-generator';
-import { DefaultNamingStrategy } from './template-helpers/naming-strategy';
-import { PropertyRenderer } from './template-helpers/property-renderer';
-import { TemplateUtilities } from './template-helpers/template-utilities';
-import { PrismaTypeConverter } from './template-helpers/type-converter';
-import {
+import { ImportStatementGenerator } from '../template-helpers/import-generator';
+import { DefaultNamingStrategy } from '../template-helpers/naming-strategy';
+import { PropertyRenderer } from '../template-helpers/property-renderer';
+import { TemplateUtilities } from '../template-helpers/template-utilities';
+import { PrismaTypeConverter } from '../template-helpers/type-converter';
+import type {
   TypeProvider,
   EntityNameProvider,
-} from './template-helpers/interfaces';
-import { ParsedField } from './types';
+} from '../template-helpers/interfaces';
+import type { ParsedField } from '../types';
 
 export interface TemplateHelpersOptions {
   connectDtoPrefix: string;
@@ -25,7 +25,7 @@ export class TemplateHelpers implements TypeProvider, EntityNameProvider {
   private readonly namingStrategy: DefaultNamingStrategy;
   private readonly typeConverter: PrismaTypeConverter;
   private readonly propertyRenderer: PropertyRenderer;
-  private readonly templateUtilities: TemplateUtilities;
+  protected readonly templateUtilities: TemplateUtilities;
 
   constructor(private readonly options: TemplateHelpersOptions) {
     this.namingStrategy = new DefaultNamingStrategy(
@@ -103,7 +103,7 @@ export class TemplateHelpers implements TypeProvider, EntityNameProvider {
 
   entityFilename(name: string, withExt = false): string {
     return this.namingStrategy.transformFileName(
-      name,
+      name.slice(0, 1).toLowerCase() + name.slice(1),
       undefined,
       '.entity',
       withExt,

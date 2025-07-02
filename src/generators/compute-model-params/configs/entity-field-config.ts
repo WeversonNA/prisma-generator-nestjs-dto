@@ -1,8 +1,8 @@
 import type { DMMF } from '@prisma/generator-helper';
 import { DTO_ENTITY_HIDDEN, DTO_RELATION_REQUIRED } from '../../annotations';
 import { isAnnotatedWith, isRelation } from '../../field-classifiers';
-import { FieldProcessingConfig } from '../shared';
-import { type TemplateHelpers } from '../../template-helpers';
+import type { FieldProcessingConfig } from '../shared';
+import { type TemplateHelpers } from '../../helpers/template-helpers';
 
 export class EntityFieldConfig implements FieldProcessingConfig {
   relationModifiers: RegExp[] = [];

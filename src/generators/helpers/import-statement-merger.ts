@@ -1,4 +1,4 @@
-import { ImportStatementParams } from '../types';
+import type { ImportStatementParams } from '../types';
 
 export class ImportStatementMerger {
   static mergeImportStatements(
@@ -51,7 +51,7 @@ export class ImportStatementMerger {
     destructItems: (string | Record<string, string>)[],
   ): string[] {
     return Array.from(
-      new Set(destructItems.filter((x) => typeof x === 'string') as string[]),
+      new Set(destructItems.filter((x) => typeof x === 'string')),
     );
   }
 

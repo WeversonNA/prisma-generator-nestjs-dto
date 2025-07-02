@@ -1,4 +1,4 @@
-import { TemplateHelpers } from '../template-helpers';
+import type { TemplateHelpers } from '../helpers/template-helpers';
 import { computeConnectDtoParams } from './compute-connect-dto-params';
 import { CreateDtoParamsComputer } from './compute-create-dto-params';
 import { UpdateDtoParamsComputer } from './compute-update-dto-params';

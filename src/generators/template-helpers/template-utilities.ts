@@ -1,5 +1,5 @@
 import { DecoratorStrategy } from '../decorators/decorator-strategy';
-import { ParsedField } from '../types';
+import type { ParsedField } from '../types';
 import { PrismaTypeConverter } from './type-converter';
 
 export class TemplateUtilities {

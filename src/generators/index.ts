@@ -8,17 +8,17 @@ import { generateConnectDto } from './generate-connect-dto';
 import { generateCreateDto } from './generate-create-dto';
 import { generateEntity } from './generate-entity';
 import { generateUpdateDto } from './generate-update-dto';
-import { TemplateHelpers } from './template-helpers';
+import { TemplateHelpers } from './helpers/template-helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
-import { Model, NamingStyle, WriteableFileSpecs } from './types';
+import type { Model, NamingStyle, WriteableFileSpecs } from './types';
 
 type SpecKey = 'connect' | 'create' | 'update' | 'entity';
 
 type SpecConfig = {
   key: SpecKey;
   dir: 'dto' | 'entity';
-  fn: (args: any) => string;
+  fn: (args: Record<string, unknown>) => string;
   fileName: (name: string, withExt?: boolean) => string;
   extra?: {
     entityPrefix?: string;
@@ -101,7 +101,9 @@ export class NestJsDtoGenerator {
       {
         key: 'connect',
         dir: 'dto',
-        fn: generateConnectDto,
+        fn: generateConnectDto as unknown as (
+          args: Record<string, unknown>,
+        ) => string,
         fileName: this.templateHelpers.connectDtoFilename.bind(
           this.templateHelpers,
         ),
@@ -110,7 +112,9 @@ export class NestJsDtoGenerator {
       {
         key: 'create',
         dir: 'dto',
-        fn: generateCreateDto,
+        fn: generateCreateDto as unknown as (
+          args: Record<string, unknown>,
+        ) => string,
         fileName: this.templateHelpers.createDtoFilename.bind(
           this.templateHelpers,
         ),
@@ -119,7 +123,9 @@ export class NestJsDtoGenerator {
       {
         key: 'update',
         dir: 'dto',
-        fn: generateUpdateDto,
+        fn: generateUpdateDto as unknown as (
+          args: Record<string, unknown>,
+        ) => string,
         fileName: this.templateHelpers.updateDtoFilename.bind(
           this.templateHelpers,
         ),
@@ -128,7 +134,9 @@ export class NestJsDtoGenerator {
       {
         key: 'entity',
         dir: 'entity',
-        fn: generateEntity,
+        fn: generateEntity as unknown as (
+          args: Record<string, unknown>,
+        ) => string,
         fileName: this.templateHelpers.entityFilename.bind(
           this.templateHelpers,
         ),

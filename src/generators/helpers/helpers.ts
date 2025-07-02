@@ -4,11 +4,11 @@ import {
   isId,
   isRelation,
   isUnique,
-} from './field-classifiers';
+} from '../field-classifiers';
 import type { DMMF } from '@prisma/generator-helper';
 import { TemplateHelpers } from './template-helpers';
-import type { ImportStatementParams, Model, ParsedField } from './types';
-import { DecoratorStrategy } from './decorators/decorator-strategy';
+import type { ImportStatementParams, Model, ParsedField } from '../types';
+import type { DecoratorStrategy } from '../decorators/decorator-strategy';
 
 export interface RelationInputResult {
   type: string;
@@ -252,7 +252,10 @@ export class Helpers {
     return {
       ...first,
       ...second,
-      destruct: [...destructStrings, destructObject],
+      destruct: [...destructStrings, destructObject].filter(
+        (value) =>
+          !(typeof value === 'object' && Object.keys(value).length === 0),
+      ),
     };
   }
 

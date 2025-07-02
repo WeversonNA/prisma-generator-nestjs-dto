@@ -1,4 +1,4 @@
-import { TemplateHelpers } from './template-helpers';
+import { TemplateHelpers } from './helpers/template-helpers';
 import type { CreateDtoParams } from './types';
 
 interface GenerateCreateDtoParam extends CreateDtoParams {
@@ -15,7 +15,7 @@ export const generateCreateDto = ({
   exportRelationModifierClasses,
   templateHelpers: t,
   addExposePropertyDecorator,
-}: GenerateCreateDtoParam) => `
+}: GenerateCreateDtoParam): string => `
 ${TemplateHelpers.importStatements(imports)}
 
 ${TemplateHelpers.each(

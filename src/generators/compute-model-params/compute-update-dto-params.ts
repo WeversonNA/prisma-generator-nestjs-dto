@@ -1,8 +1,8 @@
 import { BaseModelParamsComputer } from './base-model-params-computer';
 import { UpdateDtoFieldConfig } from './configs/update-dto-field-config';
-import type { TemplateHelpers } from '../template-helpers';
+import type { TemplateHelpers } from '../helpers/template-helpers';
 import type { Model, UpdateDtoParams } from '../types';
-import { FieldProcessingConfig } from './shared';
+import type { FieldProcessingConfig } from './shared';
 
 interface ComputeUpdateDtoParamsParam {
   model: Model;

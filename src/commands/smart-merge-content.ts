@@ -121,7 +121,7 @@ export class SmartMergeContent {
 
   private isPropertyDeclaration(line: string): boolean {
     const trimmed = line.trim();
-    return /^\s*\w+[\?\!]?\s*:\s*/.test(trimmed) && trimmed.includes(';');
+    return /^\s*\w+[?!]?\s*:\s*/.test(trimmed) && trimmed.includes(';');
   }
 
   private isEndOfBlock(line: string): boolean {
@@ -134,7 +134,7 @@ export class SmartMergeContent {
   }
 
   private extractFieldName(line: string): string | null {
-    const match = line.match(/(\w+)[\?\!]?\s*:/);
+    const match = line.match(/(\w+)[?!]?\s*:/);
     return match ? match[1] : null;
   }
 

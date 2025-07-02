@@ -1,6 +1,6 @@
-import { ParsedField } from '../types';
+import type { ParsedField } from '../types';
 import { TemplateUtilities } from './template-utilities';
-import { TypeProvider } from './interfaces';
+import type { TypeProvider } from './interfaces';
 
 export class PropertyRenderer {
   private templateUtilities: TemplateUtilities;

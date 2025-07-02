@@ -1,5 +1,5 @@
 import type { ImportStatementParams, ParsedField } from '../../types';
-import { Helpers } from '../../helpers';
+import { Helpers } from '../../helpers/helpers';
 
 export class ImportManager {
   static addSwaggerImports(

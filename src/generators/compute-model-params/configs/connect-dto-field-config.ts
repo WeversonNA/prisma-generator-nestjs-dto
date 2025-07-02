@@ -1,7 +1,7 @@
 import type { DMMF } from '@prisma/generator-helper';
 import type { FieldProcessingConfig } from '../shared';
 import { isId, isUnique } from '../../field-classifiers';
-import { type TemplateHelpers } from '../../template-helpers';
+import { type TemplateHelpers } from '../../helpers/template-helpers';
 
 export class ConnectDtoFieldConfig implements FieldProcessingConfig {
   relationModifiers: RegExp[] = [];

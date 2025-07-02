@@ -1,4 +1,4 @@
-import { ImportStatementParams } from '../types';
+import type { ImportStatementParams } from '../types';
 
 export class ImportStatementGenerator {
   static importStatement(input: ImportStatementParams): string {

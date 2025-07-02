@@ -1,10 +1,10 @@
 import { BaseModelParamsComputer } from './base-model-params-computer';
 import { ConnectDtoFieldConfig } from './configs/connect-dto-field-config';
 import type { FieldProcessingConfig } from './shared';
-import { Helpers } from '../helpers';
+import { Helpers } from '../helpers/helpers';
 
 import type { DMMF } from '@prisma/generator-helper';
-import type { TemplateHelpers } from '../template-helpers';
+import type { TemplateHelpers } from '../helpers/template-helpers';
 import type { ConnectDtoParams, ImportStatementParams, Model } from '../types';
 import { isId, isUnique } from '../field-classifiers';
 
