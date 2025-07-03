@@ -21,7 +21,7 @@ Generates `ConnectDTO`, `CreateDTO`, `UpdateDTO`, and `Entity` classes for model
 
 These classes can also be used with NestJS [ValidationPipe](https://docs.nestjs.com/techniques/validation#using-the-built-in-validationpipe) and [Serialization](https://docs.nestjs.com/techniques/serialization).
 
-### What's New in v2.1.0?
+### What's New in v2.1.2?
 
 🚀 **Latest Release with Advanced Features**
 
@@ -33,6 +33,7 @@ These classes can also be used with NestJS [ValidationPipe](https://docs.nestjs.
 - **Improved Error Handling**: Better error messages and debugging capabilities
 - **Extended Field Classifiers**: More precise field analysis and categorization
 - **TypeScript 5.8+ Support**: Full compatibility with latest TypeScript features
+- **Fix generated index.ts**: Index was empited every time it was rewritten
 
 ### Key Features
 

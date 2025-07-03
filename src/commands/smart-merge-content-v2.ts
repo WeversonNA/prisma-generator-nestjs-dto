@@ -72,6 +72,14 @@ export class SmartMergeContentV2 {
       'generated.ts',
       generatedText,
     );
+
+    if (
+      existingFile.getClasses().length === 0 &&
+      generatedFile.getClasses().length === 0
+    ) {
+      return generatedText;
+    }
+
     this.setFileImports(existingFile);
     this.setFileImports(generatedFile);
 
